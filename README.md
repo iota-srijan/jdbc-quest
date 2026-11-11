@@ -99,3 +99,7 @@ Fill this in as you learn, so you remember where each idea came from.
 | | | |
 
 Built while working through the Coder Army Spring course, plus the Java and Spring documentation.
+
+## License
+
+[MIT](LICENSE). You can use, change and share this kit, including your own forked version. Keep the license notice with it.
