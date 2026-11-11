@@ -1,0 +1,1252 @@
+<title>Spring JDBC Lab</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;600;700&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column (~70ch) that widens into full-width "lab benches" for each interactive part. */
+:root{
+  --bg:#F1F3F6; --surface:#FFFFFF; --sunk:#E7EBF0; --ink:#131B25; --muted:#576373; --line:#D3D9E1;
+  --c1:#4A54CF; --c2:#B8720C; --c3:#1F8A55; --c4:#CF3463; --c5:#0E7C8C; --c6:#8A3FB8;
+  --c1s:#E2E4FA; --c2s:#F6E7CF; --c3s:#D5EFE1; --c4s:#F9DAE3; --c5s:#D3EEF1; --c6s:#EEDFF8;
+  --code-bg:#F7F8FA; --tk-kw:#7A2FB8; --tk-str:#1F7A4A; --tk-com:#7A8594; --tk-num:#B35A00; --tk-fn:#2550C0; --tk-cls:#A0306A;
+  --f-display:'Familjen Grotesk','Segoe UI',system-ui,sans-serif;
+  --f-body:'Atkinson Hyperlegible','Segoe UI',system-ui,sans-serif;
+  --f-mono:'JetBrains Mono',ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0C1117; --surface:#141B24; --sunk:#1B2430; --ink:#E4E9EF; --muted:#93A0AF; --line:#2A3441;
+  --c1:#8D95FF; --c2:#ECA944; --c3:#52C889; --c4:#FF6B93; --c5:#4FD0E0; --c6:#C99BFF;
+  --c1s:#232853; --c2s:#3B2C12; --c3s:#153626; --c4s:#431828; --c5s:#0F3439; --c6s:#33204A;
+  --code-bg:#10161E; --tk-kw:#C79BFF; --tk-str:#7FD6A2; --tk-com:#6F7C8C; --tk-num:#F2B266; --tk-fn:#86A9FF; --tk-cls:#F59BC6;
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0C1117; --surface:#141B24; --sunk:#1B2430; --ink:#E4E9EF; --muted:#93A0AF; --line:#2A3441;
+  --c1:#8D95FF; --c2:#ECA944; --c3:#52C889; --c4:#FF6B93; --c5:#4FD0E0; --c6:#C99BFF;
+  --c1s:#232853; --c2s:#3B2C12; --c3s:#153626; --c4s:#431828; --c5s:#0F3439; --c6s:#33204A;
+  --code-bg:#10161E; --tk-kw:#C79BFF; --tk-str:#7FD6A2; --tk-com:#6F7C8C; --tk-num:#F2B266; --tk-fn:#86A9FF; --tk-cls:#F59BC6;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:17px;line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 64px}
+.wrap{max-width:1120px;margin:0 auto}
+.prose{max-width:70ch}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;line-height:1.15;margin:0}
+h1{font-size:clamp(2.2rem,5.5vw,3.6rem);font-weight:700;letter-spacing:-.02em}
+h2{font-size:clamp(1.5rem,3.2vw,2rem);font-weight:700;letter-spacing:-.01em}
+h3{font-size:1.15rem;font-weight:600}
+p{margin:0}
+code,kbd{font-family:var(--f-mono);font-size:.86em}
+:not(pre)>code{background:var(--sunk);padding:.1em .35em;border-radius:4px}
+a{color:var(--c1)}
+section{padding-block:52px 8px;display:grid;gap:18px}
+.eyebrow{font-family:var(--f-mono);font-size:.74rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.lead{font-size:1.12rem;color:var(--muted)}
+.stack{display:grid;gap:14px}
+.note{font-size:.92rem;color:var(--muted)}
+
+header.hero{padding-block:52px 8px;display:grid;gap:22px}
+.hero h1 em{font-style:normal;color:var(--c1)}
+.strip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;max-width:860px}
+.strip div{border-top:3px solid var(--line);padding-top:10px}
+.strip div:nth-child(1){border-color:var(--c1)} .strip div:nth-child(2){border-color:var(--c2)} .strip div:nth-child(3){border-color:var(--c3)}
+.strip b{font-family:var(--f-display);font-size:1.05rem;display:block}
+.strip span{color:var(--muted);font-size:.95rem}
+.toc{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:.95rem;padding:0;margin:0;list-style:none}
+.toc a{color:var(--muted);text-decoration:none;border-bottom:1px solid var(--line)}
+.toc a:hover{color:var(--ink);border-color:var(--ink)}
+.toc .lvl{font-family:var(--f-mono);font-size:.7rem;color:var(--muted);margin-right:4px}
+.series{display:flex;flex-wrap:wrap;gap:10px;align-items:center;font-size:.9rem;color:var(--muted)}
+.series .here{background:var(--ink);color:var(--bg);padding:4px 10px;border-radius:999px;font-weight:700}
+.series a{padding:4px 10px;border:1px solid var(--line);border-radius:999px;text-decoration:none;color:var(--ink)}
+
+.map{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;margin:0;padding:16px 18px;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.map dt{font-weight:700}
+.map dd{margin:0;color:var(--muted)}
+.map dd code{color:var(--ink)}
+@media (max-width:560px){.map{grid-template-columns:minmax(0,1fr)}.map dd{margin-bottom:6px}}
+
+button,select,input[type=text]{font:inherit;font-size:.92rem;color:var(--ink)}
+.btn{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:7px 12px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;line-height:1.2}
+.btn:hover{border-color:var(--muted)}
+.btn:disabled{opacity:.4;cursor:default}
+.btn.primary{background:var(--ink);color:var(--bg);border-color:var(--ink);min-width:86px;justify-content:center}
+.btn.sm{padding:4px 9px;font-size:.82rem}
+.btn.on{border-color:var(--c1);background:var(--c1s)}
+.btn:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visible,.mm-label:focus-visible{outline:2px solid var(--c1);outline-offset:2px}
+select,input[type=text]{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:7px 10px}
+
+.bench{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;display:grid;gap:16px;min-width:0}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.narr{background:var(--sunk);border-radius:10px;padding:12px 14px;min-height:3.2em}
+.narr b{font-family:var(--f-mono);font-weight:600}
+.narr .real{display:block;margin-top:6px;font-size:.88rem;color:var(--muted)}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px}
+@media (max-width:820px){.two{grid-template-columns:minmax(0,1fr)}.strip{grid-template-columns:minmax(0,1fr)}}
+
+/* mermaid */
+.mer{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;overflow-x:auto}
+.mer pre.mermaid{margin:0;font-family:var(--f-mono);font-size:.8rem;background:none;text-align:center;color:var(--ink)}
+.mer .cap{font-size:.8rem;color:var(--muted);margin-top:6px}
+
+/* interactive mindmap */
+.mm{display:grid;gap:12px}
+.mm-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.mm-tree{overflow-x:auto;padding:6px 2px 10px}
+.mm-node{display:flex;align-items:center}
+.mm-kids{display:flex;flex-direction:column;position:relative;padding-left:18px}
+.mm-kids::before{content:"";position:absolute;left:0;top:50%;width:18px;border-top:2px solid var(--line)}
+.mm-kids>.mm-node{position:relative;padding:4px 0 4px 20px}
+.mm-kids>.mm-node::before{content:"";position:absolute;left:0;top:50%;width:20px;border-top:2px solid color-mix(in srgb,var(--c) 55%,var(--line))}
+.mm-kids>.mm-node::after{content:"";position:absolute;left:0;top:0;bottom:0;border-left:2px solid color-mix(in srgb,var(--c) 55%,var(--line))}
+.mm-kids>.mm-node:first-child::after{top:50%}
+.mm-kids>.mm-node:last-child::after{bottom:50%}
+.mm-kids>.mm-node:only-child::after{display:none}
+.mm-node.closed>.mm-kids{display:none}
+.mm-label{flex:none;max-width:230px;text-align:left;border:2px solid var(--c);background:color-mix(in srgb,var(--c) 12%,var(--surface));color:var(--ink);border-radius:999px;padding:5px 12px;cursor:pointer;font-weight:700;font-size:.88rem;line-height:1.25;display:inline-flex;gap:6px;align-items:center}
+.mm-node.lv0>.mm-label{font-family:var(--f-display);font-size:1.1rem;padding:10px 16px;border-radius:14px;background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.mm-node.lv2>.mm-label,.mm-node.lv3>.mm-label{font-weight:400;border-width:1.5px;background:var(--surface);border-radius:8px;font-size:.84rem}
+.mm-label.sel{box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 35%,transparent)}
+.mm-count{font-family:var(--f-mono);font-size:.7rem;background:var(--c);color:var(--surface);border-radius:999px;padding:0 6px;display:none}
+.mm-node.closed>.mm-label .mm-count{display:inline}
+.mm-detail{border-left:4px solid var(--c,var(--c1));background:var(--sunk);border-radius:0 10px 10px 0;padding:12px 14px;min-height:4em}
+.mm-detail b{font-family:var(--f-display);font-size:1.05rem;display:block;margin-bottom:2px}
+.mm-detail .path{font-family:var(--f-mono);font-size:.72rem;color:var(--muted);display:block;margin-bottom:4px}
+
+/* journey lane */
+.lane{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;align-items:stretch}
+.stop{border:2px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center;display:grid;gap:4px;align-content:start;transition:all .25s;background:var(--bg)}
+.stop b{font-family:var(--f-display);font-size:.95rem}
+.stop small{color:var(--muted);font-size:.74rem;line-height:1.3}
+.stop.on{border-color:var(--c4);background:var(--c4s);transform:translateY(-3px)}
+.stop.done{border-color:var(--c3)}
+.pkt{min-height:2.2em;text-align:center;font-family:var(--f-mono);font-size:.78rem;color:var(--c4);font-weight:600}
+@media (max-width:640px){.lane{grid-template-columns:minmax(0,1fr)}.stop.on{transform:none}}
+
+/* url decoder */
+.url{font-family:var(--f-mono);font-size:clamp(.85rem,2.6vw,1.15rem);display:flex;flex-wrap:wrap;gap:2px;overflow-x:auto}
+.url button{font-family:var(--f-mono);font-size:inherit;border:none;border-bottom:3px solid var(--c);background:color-mix(in srgb,var(--c) 10%,transparent);color:var(--ink);padding:4px 3px;cursor:pointer;border-radius:4px 4px 0 0}
+.url button.sel{background:color-mix(in srgb,var(--c) 28%,transparent)}
+.url .sep{padding:4px 0;color:var(--muted)}
+
+/* cards */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.card{border:1px solid var(--line);border-radius:12px;padding:14px;display:grid;gap:6px;background:var(--surface);align-content:start}
+.card b{font-family:var(--f-display);font-size:1.05rem}
+.card .what{font-size:.8rem;font-family:var(--f-mono);color:var(--muted)}
+.card p{font-size:.95rem;color:var(--muted)}
+
+/* game */
+.game{display:grid;gap:10px}
+.qrow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.qrow code{font-size:.82rem;white-space:normal;word-break:break-word}
+.qrow .opts{display:flex;gap:6px;flex-wrap:wrap}
+.qrow .fb{grid-column:1/-1;font-size:.9rem}
+.qrow.right{border-color:var(--c3);background:var(--c3s)}
+.qrow.wrong{border-color:var(--c4);background:var(--c4s)}
+@media (max-width:640px){.qrow{grid-template-columns:minmax(0,1fr)}}
+.score{font-family:var(--f-mono);font-size:.85rem;color:var(--muted)}
+
+/* resultset */
+.rs{width:100%;border-collapse:collapse;font-family:var(--f-mono);font-size:.84rem}
+.rs th,.rs td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left}
+.rs th{color:var(--muted);font-weight:600}
+.rs td.cur{width:4.5em;color:var(--c4);font-weight:700}
+.rs tr.on td{background:var(--c4s)}
+.rs tr.read td{color:var(--muted)}
+.rs tr.before td{color:var(--c4);font-weight:700}
+.objs{display:flex;flex-wrap:wrap;gap:8px;min-height:44px}
+.obj{border:1.5px solid var(--c3);background:var(--c3s);border-radius:8px;padding:5px 9px;font-family:var(--f-mono);font-size:.76rem;animation:pop .3s ease}
+.obj.warn{border-color:var(--c4);background:var(--c4s)}
+@keyframes pop{from{transform:scale(.8);opacity:.3}to{transform:none;opacity:1}}
+.pc{background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:10px 0;font-family:var(--f-mono);font-size:.8rem;line-height:1.55;overflow-x:auto}
+.pc div{padding:0 12px;white-space:pre;border-left:3px solid transparent}
+.pc div.on{background:var(--c4s);border-left-color:var(--c4)}
+.pc .c{color:var(--tk-com)}
+
+/* injection lab */
+.sql{font-family:var(--f-mono);font-size:.86rem;background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:12px 14px;white-space:pre-wrap;word-break:break-word;line-height:1.7}
+.sql .u{background:var(--c3s);border-radius:3px}
+.sql .x{background:var(--c4);color:var(--surface);border-radius:3px}
+.sql .q{color:var(--c1);font-weight:700}
+.verdict{font-weight:700}
+.ok{color:var(--c3)} .bad{color:var(--c4)}
+
+/* tabs + code */
+.tabs{display:flex;gap:4px;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+.tab{background:none;border:none;border-bottom:2px solid transparent;padding:8px 12px;cursor:pointer;color:var(--muted);font-weight:700}
+.tab[aria-selected="true"]{color:var(--ink);border-color:var(--c1)}
+pre.code{background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow-x:auto;margin:0;font-family:var(--f-mono);font-size:.8rem;line-height:1.6;color:var(--ink)}
+pre.code code{font-size:inherit;background:none;padding:0}
+.token.keyword,.token.boolean{color:var(--tk-kw)}
+.token.string,.token.char,.token.attr-value{color:var(--tk-str)}
+.token.comment{color:var(--tk-com);font-style:italic}
+.token.number{color:var(--tk-num)}
+.token.function{color:var(--tk-fn)}
+.token.class-name,.token.tag{color:var(--tk-cls)}
+.token.operator,.token.punctuation{color:var(--muted)}
+.gets{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:.92rem}
+.gets b{font-family:var(--f-mono);font-size:.85rem}
+
+/* nesting */
+.nest{display:grid;gap:0}
+.box{border:2px dashed var(--line);border-radius:12px;padding:10px 12px 12px;display:grid;gap:8px;transition:all .25s;color:var(--muted)}
+.box>.lab{font-family:var(--f-mono);font-size:.8rem;font-weight:600;display:flex;justify-content:space-between;gap:8px}
+.box.open{border-style:solid;color:var(--ink)}
+.box.b1.open{border-color:var(--c1);background:var(--c1s)}
+.box.b2.open{border-color:var(--c2);background:var(--c2s)}
+.box.b3.open{border-color:var(--c3);background:var(--c3s)}
+.box.closing{border-color:var(--c4)!important;background:var(--c4s)!important}
+
+/* troubleshooter */
+.errs{display:flex;flex-wrap:wrap;gap:8px}
+.errs button{font-family:var(--f-mono);font-size:.78rem;text-align:left}
+.fix ol{margin:6px 0 0;padding-left:1.3em;display:grid;gap:4px}
+
+details.setup{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:12px 16px}
+details.setup summary{cursor:pointer;font-weight:700}
+details.setup[open] summary{margin-bottom:10px}
+
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+table.cmp{border-collapse:collapse;width:100%;min-width:640px;font-size:.92rem}
+table.cmp th,table.cmp td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+table.cmp th{font-family:var(--f-display);background:var(--sunk)}
+table.cmp tr:last-child td{border-bottom:none}
+
+.gotcha{border:2px solid var(--c4);border-radius:14px;padding:20px;background:var(--surface);display:grid;gap:14px}
+.vs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.vs>div{min-width:0}
+@media (max-width:720px){.vs{grid-template-columns:minmax(0,1fr)}}
+.vs .tag{font-family:var(--f-mono);font-size:.74rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px}
+.traps{display:grid;gap:10px;margin:0;padding-left:1.2em}
+
+details.q{border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:12px 16px}
+details.q summary{cursor:pointer;font-weight:700}
+details.q[open] summary{margin-bottom:8px}
+details.q p{color:var(--muted)}
+.next{display:flex;justify-content:flex-end;padding-top:30px}
+.next a{font-family:var(--f-display);font-size:1.2rem;font-weight:700;text-decoration:none;border:2px solid var(--ink);color:var(--ink);padding:12px 18px;border-radius:12px}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+
+/* long code lines and tab rows scroll inside their own box instead of widening the whole page */
+section>*,.stack>*{min-width:0}
+section,.stack,.bench{grid-template-columns:minmax(0,1fr)}
+.grid33 button,.grid33 .rh,.grid33 .h{min-width:0;overflow-wrap:anywhere}
+</style>
+<style>
+/* page-2 extras */
+.codecmp{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:14px}
+@media (max-width:860px){.codecmp{grid-template-columns:minmax(0,1fr)}}
+.lines{background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:10px 0;font-family:var(--f-mono);font-size:.78rem;line-height:1.6;overflow-x:auto}
+.lines div{padding:0 12px;white-space:pre;border-left:3px solid transparent;transition:background .2s}
+.lines.hl div.b{background:var(--c4s);border-left-color:var(--c4);text-decoration:line-through;text-decoration-color:color-mix(in srgb,var(--c4) 60%,transparent)}
+.lines.hl div.v{background:var(--c2s);border-left-color:var(--c2)}
+.lines.hl div.m{background:var(--c3s);border-left-color:var(--c3)}
+.lines .ttl{font-family:var(--f-body);font-weight:700;padding-bottom:6px;color:var(--muted);white-space:normal}
+.who{display:grid;gap:8px}
+.who .qrow{grid-template-columns:minmax(0,1fr) auto}
+.who .qrow span{font-weight:700}
+.pool{display:grid;gap:14px}
+.slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+.slot{border:2px solid var(--c3);background:var(--c3s);border-radius:10px;padding:8px 10px;font-size:.82rem;display:grid;gap:4px;min-height:64px}
+.slot b{font-family:var(--f-mono);font-size:.78rem}
+.slot.busy{border-color:var(--c1);background:var(--c1s)}
+.slot.opening{border-color:var(--c2);background:var(--c2s)}
+.slot .bar{height:5px;background:var(--line);border-radius:3px;overflow:hidden}
+.slot .bar i{display:block;height:100%;background:var(--c1)}
+.slot.opening .bar i{background:var(--c2)}
+.queue{display:flex;flex-wrap:wrap;gap:6px;min-height:40px;align-items:center}
+.qchip{border:1.5px solid var(--c2);background:var(--c2s);border-radius:8px;padding:4px 8px;font-family:var(--f-mono);font-size:.74rem;display:grid;gap:3px;min-width:96px}
+.qchip .bar{height:4px;background:var(--line);border-radius:2px;overflow:hidden}
+.qchip .bar i{display:block;height:100%;background:var(--c4)}
+.log{font-family:var(--f-mono);font-size:.76rem;display:grid;gap:2px;max-height:150px;overflow:auto}
+.stats4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;text-align:center}
+@media (max-width:600px){.stats4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.stats4 div{border:1px solid var(--line);border-radius:10px;padding:8px}
+.stats4 b{display:block;font-family:var(--f-display);font-size:1.4rem;font-variant-numeric:tabular-nums}
+.stats4 span{font-size:.74rem;color:var(--muted)}
+.grid33{display:grid;grid-template-columns:auto repeat(3,minmax(0,1fr));gap:6px;font-size:.86rem}
+.grid33 .h{font-weight:700;font-family:var(--f-display);padding:6px;text-align:center}
+.grid33 .rh{font-family:var(--f-mono);font-size:.8rem;font-weight:600;padding:6px;align-self:center}
+.grid33 button{border:1.5px solid var(--line);border-radius:8px;background:var(--bg);padding:8px 6px;cursor:pointer;font-family:var(--f-mono);font-size:.76rem;color:var(--ink);text-align:center;line-height:1.3}
+.grid33 button.good{border-color:var(--c3);background:var(--c3s)}
+.grid33 button.boom{border-color:var(--c4);background:var(--c4s)}
+.grid33 button.sel{box-shadow:0 0 0 3px color-mix(in srgb,var(--c1) 40%,transparent)}
+@media (max-width:560px){.grid33{grid-template-columns:minmax(0,1fr) repeat(3,minmax(0,1fr));font-size:.78rem}.grid33 button{font-size:.68rem}}
+.conv{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:12px;align-items:center}
+@media (max-width:700px){.conv{grid-template-columns:minmax(0,1fr)}}
+.mapper{border:2px solid var(--c6);background:var(--c6s);border-radius:14px;padding:12px 14px;text-align:center;font-family:var(--f-mono);font-size:.8rem;display:grid;gap:4px}
+.mapper b{font-family:var(--f-display);font-size:1rem}
+.mapper.on{box-shadow:0 0 0 4px color-mix(in srgb,var(--c6) 30%,transparent)}
+.alarm{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media (max-width:760px){.alarm{grid-template-columns:minmax(0,1fr)}}
+.alarm>div{border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:grid;gap:4px;align-content:start;min-width:0}
+.alarm .k{font-family:var(--f-mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.alarm code{white-space:normal;word-break:break-word}
+.alarm .spring{border-color:var(--c3);background:var(--c3s)}
+.alarm .raw{border-color:var(--c2);background:var(--c2s)}
+.timeline{display:grid;gap:6px;margin:0;padding:0;list-style:none}
+.timeline li{display:grid;grid-template-columns:86px minmax(0,1fr);gap:10px;align-items:center;padding:6px 10px;border-radius:8px;border:1px solid transparent;color:var(--muted);transition:all .2s}
+.timeline li.done{color:var(--ink)}
+.timeline li.on{border-color:var(--c4);background:var(--c4s);color:var(--ink)}
+.actor{font-family:var(--f-mono);font-size:.7rem;font-weight:600;text-align:center;border-radius:999px;padding:2px 6px;border:1.5px solid var(--c)}
+.conv-in{display:flex;flex-wrap:wrap;gap:10px;align-items:center;font-family:var(--f-mono)}
+</style>
+
+<div class="wrap">
+
+<header class="hero">
+  <div class="series"><a href="jdbc-fundamentals.html">← 1 · JDBC fundamentals</a><span class="here">2 · Spring JDBC</span></div>
+  <span class="eyebrow">Coder Army notes · interactive version</span>
+  <h1>Keep the SQL. <em>Drop the chores.</em></h1>
+  <p class="lead prose">Raw JDBC makes you open, prepare, catch and close in every single method. Spring JDBC's <code>JdbcTemplate</code> does those repeated steps for you. You still write the SQL, the values and the row-to-object mapping. Here are the 42 pages as maps, a connection-pool simulator, and small labs.</p>
+  <div class="strip">
+    <div><b>Connections from a pool</b><span>A DataSource (HikariCP) hands out reusable connections.</span></div>
+    <div><b>JdbcTemplate does the chores</b><span>Open, run, loop, close and error handling happen for you.</span></div>
+    <div><b>You write three things</b><span>The SQL, the values in order, and how one row becomes an object.</span></div>
+  </div>
+  <ul class="toc">
+    <li><a href="#big"><span class="lvl">MAP</span>Big picture</a></li>
+    <li><a href="#analogy"><span class="lvl">BASIC</span>The kitchen analogy</a></li>
+    <li><a href="#problem"><span class="lvl">BASIC</span>What gets removed</a></li>
+    <li><a href="#who"><span class="lvl">BASIC</span>Who does what</a></li>
+    <li><a href="#ds"><span class="lvl">CORE</span>DataSource</a></li>
+    <li><a href="#pool"><span class="lvl">CORE</span>Connection pool</a></li>
+    <li><a href="#setup"><span class="lvl">CORE</span>Boot setup</a></li>
+    <li><a href="#methods"><span class="lvl">CORE</span>update / query / queryForObject</a></li>
+    <li><a href="#mapper"><span class="lvl">CORE</span>RowMapper</a></li>
+    <li><a href="#errors"><span class="lvl">ADV</span>Errors</a></li>
+    <li><a href="#flow"><span class="lvl">ADV</span>Full flow</a></li>
+    <li><a href="#gotcha"><span class="lvl">!</span>The gotcha</a></li>
+    <li><a href="#quiz"><span class="lvl">TEST</span>Quiz</a></li>
+  </ul>
+</header>
+
+<section id="big">
+  <span class="eyebrow">Big picture</span>
+  <h2>The whole topic on one map</h2>
+  <p class="prose">Tap a bubble to read it in plain words. Tap again to fold. Revisit after each section and try explaining each branch before tapping.</p>
+  <div class="bench"><div class="mm" id="mm-big"></div></div>
+</section>
+
+<section id="analogy">
+  <span class="eyebrow">The analogy</span>
+  <h2>A restaurant kitchen with staff</h2>
+  <div class="prose stack">
+    <p>Raw JDBC is cooking alone. For every dish you fetch a pan, light the stove, cook, wash the pan, put it away, and deal with every alarm yourself. The cooking is maybe a fifth of the work.</p>
+    <p>With kitchen staff, you only hand over the recipe, the ingredients, and how to plate each portion. The staff fetch pans from a shared rack, cook, wash up and put everything back. If something goes wrong, the alarm says <em>what</em> went wrong ("out of eggs", "oven broken") instead of one generic beep.</p>
+    <p>The rack only holds a fixed number of pans. When they're all in use, the next cook waits. If no pan comes back in time, they give up and report it.</p>
+  </div>
+  <dl class="map prose">
+    <dt>You, the chef</dt><dd>your repository code</dd>
+    <dt>The recipe</dt><dd>the SQL</dd>
+    <dt>The ingredients</dt><dd>the parameter values, in the order of the <code>?</code> blanks</dd>
+    <dt>"Plate each portion like this"</dt><dd>a <strong>RowMapper</strong>: one row → one Student</dd>
+    <dt>The kitchen staff</dt><dd><strong>JdbcTemplate</strong></dd>
+    <dt>"Ask for a pan" door</dt><dd><strong>DataSource</strong>: you ask for a connection without caring where it comes from</dd>
+    <dt>The shared pan rack</dt><dd>a <strong>connection pool</strong> (<strong>HikariCP</strong> in Spring Boot)</dd>
+    <dt>A pan</dt><dd>a database <code>Connection</code>. Putting it back on the rack = <code>close()</code> in a pool</dd>
+    <dt>Giving up after waiting</dt><dd><code>connection-timeout</code> (default 30 seconds)</dd>
+    <dt>Labelled alarms</dt><dd><strong>DataAccessException</strong> types like <code>DuplicateKeyException</code>, instead of one vague <code>SQLException</code></dd>
+  </dl>
+</section>
+
+<section id="problem">
+  <span class="eyebrow">Basics · the problem</span>
+  <h2>Same method, before and after</h2>
+  <p class="prose">Turn on the highlight to see which lines are chores Spring takes over, which are values you still give, and which are your real logic.</p>
+  <div class="bench">
+    <div class="toolbar"><button class="btn on" type="button" id="hl-btn">Highlight: on</button>
+      <span class="note"><span style="color:var(--c4)">■</span> Spring does it · <span style="color:var(--c2)">■</span> you give values, Spring binds them · <span style="color:var(--c3)">■</span> still your job</span></div>
+    <div class="codecmp">
+      <div class="lines hl" id="raw-lines"></div>
+      <div class="lines hl" id="sp-lines"></div>
+    </div>
+  </div>
+  <dl class="map prose">
+    <dt>Gone</dt><dd>Opening the connection, creating the PreparedStatement, each <code>setXxx()</code> call, try-with-resources, cleanup, the <code>SQLException</code> catch block.</dd>
+    <dt>Still yours</dt><dd>Correct SQL, values in the right order, and what the returned count means.</dd>
+    <dt>Under the hood</dt><dd>Spring still uses plain JDBC (<code>Connection</code>, <code>PreparedStatement</code>, <code>ResultSet</code>). It just manages them for you.</dd>
+  </dl>
+</section>
+
+<section id="who">
+  <span class="eyebrow">Basics · the template idea</span>
+  <h2>Who does each step?</h2>
+  <p class="prose">Every database call follows the same fixed recipe. Spring runs the parts that never change, and you supply the parts that do. This is the <strong>Template Method</strong> idea, and it's where the name JdbcTemplate comes from. Guess each step, then check the map.</p>
+  <div class="bench">
+    <div class="who" id="who-game"></div>
+    <div class="toolbar"><span class="score" id="who-score"></span><button class="btn sm" id="who-reset" type="button">Try again</button></div>
+  </div>
+  <div class="mer prose" style="max-width:none">
+<pre class="mermaid">
+mindmap
+  root((One database call))
+    Spring does
+      Get a connection
+      Create the statement
+      Bind values to blanks
+      Run it
+      Loop over rows
+      Close and return connection
+      Translate errors
+    You do
+      Write the SQL
+      Give values in order
+      Map one row to an object
+      Decide what the result means
+</pre>
+  </div>
+</section>
+
+<section id="ds">
+  <span class="eyebrow">Core · where connections come from</span>
+  <h2>DataSource: the "ask for a pan" door</h2>
+  <div class="prose stack">
+    <p>With raw JDBC, your repository knew the URL, username and password, and dialled with <code>DriverManager</code>. A repository should care about students, not about how to log in to MySQL.</p>
+    <p>A <strong>DataSource</strong> is a Java interface (<code>javax.sql.DataSource</code>) with one important job: <code>getConnection()</code>. It's a connection <em>provider</em>, not a connection itself. Your repository asks it for a connection and doesn't know or care how it was made.</p>
+  </div>
+  <div class="two">
+    <div class="mer" style="min-width:0">
+<pre class="mermaid">
+flowchart TD
+  R["StudentRepository"] --> D["DataSource<br/>interface"]
+  D -. "in development" .-> S["Simple provider<br/>new connection each call"]
+  D -. "in production" .-> H["HikariDataSource<br/>reuses pooled connections"]
+</pre>
+      <div class="cap">Swap what's behind the door without touching the repository. That's dependency inversion in practice.</div>
+    </div>
+    <div class="tbl-wrap" style="min-width:0">
+      <table class="cmp" style="min-width:0">
+        <thead><tr><th></th><th>DriverManager</th><th>DataSource</th></tr></thead>
+        <tbody>
+          <tr><td><b>What it is</b></td><td>A static "dial now" helper</td><td>An injectable connection provider</td></tr>
+          <tr><td><b>Who knows the login</b></td><td>The repository</td><td>Configuration, outside the repository</td></tr>
+          <tr><td><b>Pooling</b></td><td>Never</td><td>If the implementation is a pool</td></tr>
+          <tr><td><b>Used in</b></td><td>Small raw JDBC programs</td><td>Spring and other managed apps</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+<pre class="code"><code class="language-java">public class StudentRepository {
+    private final DataSource dataSource;              // the door, injected
+
+    public StudentRepository(DataSource dataSource) {
+        this.dataSource = dataSource;
+    }
+    // somewhere inside: Connection connection = dataSource.getConnection();
+}</code></pre>
+  <p class="prose note"><b>Remember:</b> DataSource ≠ connection pool. A pool <em>can implement</em> DataSource. HikariDataSource is one that does.</p>
+</section>
+
+<section id="pool">
+  <span class="eyebrow">Core · connection pooling</span>
+  <h2>The pan rack, live</h2>
+  <div class="prose stack">
+    <p>Opening a real connection is slow: network, contact the server, check the password, create a session. Doing that for every request of a busy web app wastes time and can flood the database.</p>
+    <p>A <strong>pool</strong> opens a few connections once and lends them out. <code>close()</code> doesn't destroy the connection, it puts it back on the rack. Send requests below and watch. Then switch to "No pool" and send the same burst.</p>
+  </div>
+  <div class="bench pool">
+    <div class="toolbar">
+      <button class="btn on" type="button" id="pm-pool">With a pool</button>
+      <button class="btn" type="button" id="pm-none">No pool</button>
+      <label class="note" for="p-size">maximum-pool-size <input type="range" id="p-size" min="1" max="6" value="3"> <b id="p-size-v">3</b></label>
+    </div>
+    <div class="toolbar">
+      <button class="btn primary" type="button" id="p-one">Send 1 request</button>
+      <button class="btn" type="button" id="p-burst">Send burst of 8</button>
+      <button class="btn" type="button" id="p-reset">↺ Reset</button>
+      <span class="note">connection-timeout = 4 s in this demo (real default 30 s) · each query takes 2–3.5 s</span>
+    </div>
+    <div><span class="eyebrow" id="p-slots-title">The pool (pans on the rack)</span><div class="slots" id="p-slots"></div></div>
+    <div><span class="eyebrow">Waiting for a connection</span><div class="queue" id="p-queue"></div></div>
+    <div class="stats4">
+      <div><b id="ps-served">0</b><span>requests served</span></div>
+      <div><b id="ps-failed">0</b><span>gave up (timeout)</span></div>
+      <div><b id="ps-created">0</b><span>real connections opened</span></div>
+      <div><b id="ps-peak">0</b><span>most open at the database at once</span></div>
+    </div>
+    <div class="narr" id="p-msg"></div>
+    <div class="log" id="p-log"></div>
+  </div>
+  <div class="mer prose" style="max-width:none">
+<pre class="mermaid">
+mindmap
+  root((Connection pool))
+    Why
+      Opening is slow
+      Reuse is fast
+      Protects the database
+    How it lends
+      getConnection borrows
+      close gives it back
+    When all are busy
+      Request waits
+      Timeout then error
+    Each connection costs
+      Memory and sockets
+      Session state
+      Database capacity
+</pre>
+  </div>
+  <h3>HikariCP settings in plain words</h3>
+  <div class="tbl-wrap">
+    <table class="cmp">
+      <thead><tr><th>Property</th><th>Plain meaning</th><th>Kitchen version</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td><code>maximum-pool-size</code></td><td>Most connections the pool will ever hold</td><td>Pans on the rack</td><td>10</td></tr>
+        <tr><td><code>minimum-idle</code></td><td>Spare connections it tries to keep ready</td><td>Clean pans always waiting</td><td>5</td></tr>
+        <tr><td><code>connection-timeout</code></td><td>How long a request waits for one before failing</td><td>How long a cook waits for a pan</td><td>30000 ms (30 s)</td></tr>
+        <tr><td><code>idle-timeout</code></td><td>How long an unused one may sit before removal</td><td>Unused pans go to storage</td><td>600000 ms (10 min)</td></tr>
+        <tr><td><code>max-lifetime</code></td><td>Oldest a connection may get before replacement</td><td>Old pans get replaced</td><td>1800000 ms (30 min)</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="prose note"><b>Bigger isn't automatically faster.</b> Size the pool from expected concurrency, average query time, database capacity, number of app instances, and load tests. Every connection costs resources on both sides.</p>
+</section>
+
+<section id="setup">
+  <span class="eyebrow">Core · Spring Boot setup</span>
+  <h2>Three dependencies, a few properties, zero manual beans</h2>
+  <div class="two">
+    <div class="stack" style="min-width:0">
+<pre class="code"><code class="language-markup">&lt;!-- Spring JDBC + HikariCP --&gt;
+&lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-boot-starter-jdbc&lt;/artifactId&gt;
+&lt;/dependency&gt;
+&lt;!-- the MySQL translator --&gt;
+&lt;dependency&gt;
+    &lt;groupId&gt;com.mysql&lt;/groupId&gt;
+    &lt;artifactId&gt;mysql-connector-j&lt;/artifactId&gt;
+    &lt;scope&gt;runtime&lt;/scope&gt;
+&lt;/dependency&gt;
+&lt;!-- only for a REST app --&gt;
+&lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-boot-starter-web&lt;/artifactId&gt;
+&lt;/dependency&gt;</code></pre>
+<pre class="code"><code class="language-properties"># application.properties
+spring.datasource.url=jdbc:mysql://localhost:3306/student_db
+spring.datasource.username=root
+spring.datasource.password=your_password
+# driver class is usually detected from the URL
+
+spring.datasource.hikari.maximum-pool-size=10
+spring.datasource.hikari.minimum-idle=5
+spring.datasource.hikari.connection-timeout=30000</code></pre>
+    </div>
+    <div class="mer" style="min-width:0">
+<pre class="mermaid">
+flowchart TD
+  A["1 · Spring JDBC found on classpath"] --> B["2 · JDBC driver found"]
+  B --> C["3 · Read spring.datasource.*"]
+  C --> D["4 · Look for a pool library"]
+  D --> E["5 · Prefer HikariCP"]
+  E --> F["6 · Build and configure the DataSource"]
+  F --> G["7 · Register it as a bean"]
+  G --> H["Then: build JdbcTemplate from it"]
+</pre>
+      <div class="cap">What Spring Boot auto-configuration does at startup. If you define your own DataSource bean, Boot steps back.</div>
+    </div>
+  </div>
+<pre class="code"><code class="language-java">// You DON'T need to write these. Boot does the equivalent for you:
+@Bean
+public DataSource dataSource() {
+    HikariDataSource ds = new HikariDataSource();
+    ds.setJdbcUrl("jdbc:mysql://localhost:3306/student_db");
+    ds.setUsername("root");
+    ds.setPassword("password");
+    return ds;
+}
+@Bean
+public JdbcTemplate jdbcTemplate(DataSource dataSource) {
+    return new JdbcTemplate(dataSource);   // staff need the pan door to work
+}
+
+// Want proof it's Hikari? Print the class at startup:
+@Component
+public class DataSourceChecker {
+    private final DataSource dataSource;
+    public DataSourceChecker(DataSource dataSource) { this.dataSource = dataSource; }
+
+    @PostConstruct
+    public void check() {
+        System.out.println(dataSource.getClass());  // class com.zaxxer.hikari.HikariDataSource
+    }
+}</code></pre>
+  <dl class="map prose">
+    <dt>Project layout</dt><dd><code>controller/StudentController</code> → <code>service/StudentService</code> → <code>repository/StudentRepository</code> + <code>StudentRowMapper</code> → <code>model/Student</code></dd>
+    <dt>Don't</dt><dd>write <code>new JdbcTemplate()</code> yourself. It has no DataSource. Inject the one Boot built.</dd>
+  </dl>
+</section>
+
+<section id="methods">
+  <span class="eyebrow">Core · the three methods</span>
+  <h2>update, query, queryForObject</h2>
+  <div class="mer prose" style="max-width:none">
+<pre class="mermaid">
+flowchart TD
+  Q{"What does your SQL do?"}
+  Q -- "Changes data<br/>INSERT · UPDATE · DELETE" --> U["update()<br/>returns how many rows changed"]
+  Q -- "Reads rows" --> R{"How many rows can come back?"}
+  R -- "0, 1 or many" --> L["query()<br/>returns a List, maybe empty"]
+  R -- "Exactly one, guaranteed" --> O["queryForObject()<br/>returns one object or throws"]
+</pre>
+  </div>
+  <h3>What comes back? Tap a cell</h3>
+  <div class="bench">
+    <div class="grid33" id="g33"></div>
+    <div class="narr" id="g33-msg"></div>
+  </div>
+  <div class="stack">
+    <div class="tabs" role="tablist" id="sp-tabs">
+      <button class="tab" role="tab" aria-selected="true" data-tab="save" type="button">Create</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="all" type="button">Read all</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="one" type="button">Read one</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="one2" type="button">Read one (no exception)</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="upd" type="button">Update</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="del" type="button">Delete</button>
+    </div>
+<div data-panel="save">
+<pre class="code"><code class="language-java">@Repository
+public class StudentRepository {
+    private final JdbcTemplate jdbcTemplate;
+    private final RowMapper&lt;Student&gt; studentRowMapper = new StudentRowMapper(); // reuse one mapper
+
+    public StudentRepository(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
+
+    public boolean save(Student student) {
+        String sql = "INSERT INTO students(name, email, age) VALUES (?, ?, ?)";
+        int rowsAffected = jdbcTemplate.update(sql,
+                student.getName(),    // 1st ?
+                student.getEmail(),   // 2nd ?
+                student.getAge());    // 3rd ?  (order must match!)
+        return rowsAffected == 1;
+    }
+}</code></pre>
+</div>
+<div data-panel="all" hidden>
+<pre class="code"><code class="language-java">public List&lt;Student&gt; findAll() {
+    String sql = "SELECT id, name, email, age FROM students";
+    return jdbcTemplate.query(sql, studentRowMapper);   // [] when the table is empty
+}</code></pre>
+</div>
+<div data-panel="one" hidden>
+<pre class="code"><code class="language-java">public Optional&lt;Student&gt; findById(Long id) {
+    String sql = "SELECT id, name, email, age FROM students WHERE id = ?";
+    try {
+        Student student = jdbcTemplate.queryForObject(sql, studentRowMapper, id);
+        return Optional.of(student);
+    } catch (EmptyResultDataAccessException e) {   // ONLY "zero rows" means not found
+        return Optional.empty();
+    }
+    // database down, bad SQL, etc. keep flying upward as real errors
+}</code></pre>
+</div>
+<div data-panel="one2" hidden>
+<pre class="code"><code class="language-java">public Optional&lt;Student&gt; findById(Long id) {
+    String sql = "SELECT id, name, email, age FROM students WHERE id = ?";
+    List&lt;Student&gt; students = jdbcTemplate.query(sql, studentRowMapper, id);
+    return students.stream().findFirst();   // empty list → Optional.empty()
+}
+// Trade-off: queryForObject() states "exactly one row expected" more clearly.
+// For primary-key lookups, both are fine if you understand how each behaves.</code></pre>
+</div>
+<div data-panel="upd" hidden>
+<pre class="code"><code class="language-java">public boolean update(Long id, Student student) {
+    String sql = "UPDATE students SET name = ?, email = ?, age = ? WHERE id = ?";
+    int rowsAffected = jdbcTemplate.update(sql,
+            student.getName(), student.getEmail(), student.getAge(), id);  // id is the 4th ?
+    return rowsAffected == 1;   // 0 = no student with that id
+}</code></pre>
+</div>
+<div data-panel="del" hidden>
+<pre class="code"><code class="language-java">public boolean deleteById(Long id) {
+    return jdbcTemplate.update("DELETE FROM students WHERE id = ?", id) == 1;
+}</code></pre>
+</div>
+  </div>
+</section>
+
+<section id="mapper">
+  <span class="eyebrow">Core · RowMapper</span>
+  <h2>"Plate each portion like this"</h2>
+  <p class="prose">A <strong>RowMapper</strong> answers one question: how does one row become one object? You write that once. Spring loops through the rows and calls your mapper for each one. Step through it.</p>
+  <div class="bench" id="rm">
+    <div class="conv">
+      <div style="overflow-x:auto;min-width:0"><table class="rs" id="rm-rows"></table></div>
+      <div class="mapper" id="rm-mapper"><b>StudentRowMapper</b><span>mapRow(rs, rowNum)</span><span id="rm-calls">called 0 times</span></div>
+      <div class="objs" id="rm-out" style="min-width:0"></div>
+    </div>
+    <div class="narr" id="rm-msg"></div>
+  </div>
+  <div class="two">
+<pre class="code" style="min-width:0"><code class="language-java">// As a class: clearest while learning
+public class StudentRowMapper implements RowMapper&lt;Student&gt; {
+    @Override
+    public Student mapRow(ResultSet rs, int rowNumber) throws SQLException {
+        Student s = new Student();
+        s.setId(rs.getLong("id"));
+        s.setName(rs.getString("name"));
+        s.setEmail(rs.getString("email"));
+        s.setAge(rs.getInt("age"));
+        return s;      // one row in, one Student out
+    }
+}</code></pre>
+<pre class="code" style="min-width:0"><code class="language-java">// As a lambda: RowMapper has one method, so this works
+private final RowMapper&lt;Student&gt; studentRowMapper =
+        (rs, rowNumber) -&gt; new Student(
+                rs.getLong("id"),
+                rs.getString("name"),
+                rs.getString("email"),
+                rs.getInt("age"));
+
+// Or let Spring match columns to setters by name:
+private final RowMapper&lt;Student&gt; auto =
+        new BeanPropertyRowMapper&lt;&gt;(Student.class);</code></pre>
+  </div>
+  <p class="prose note">The mapper has no changing state: it reads the current row and returns a new object. So one shared instance is safe to reuse.</p>
+  <h3>BeanPropertyRowMapper name matcher</h3>
+  <div class="bench">
+    <div class="conv-in"><label for="bp-in" class="note">Column name</label><input type="text" id="bp-in" value="first_name"><span>→</span><b id="bp-out"></b></div>
+    <div class="narr" id="bp-msg"></div>
+    <div class="toolbar"><button class="btn sm" type="button" data-bp="email">email</button><button class="btn sm" type="button" data-bp="date_of_birth">date_of_birth</button><button class="btn sm" type="button" data-bp="student_age">student_age</button><button class="btn sm" type="button" data-bp="id">id</button></div>
+  </div>
+  <div class="two">
+    <dl class="map" style="min-width:0"><dt>Good for</dt><dd>Simple tables, prototypes, less code.</dd><dt>Needs</dt><dd>A no-argument constructor and public setters on <code>Student</code>.</dd></dl>
+    <dl class="map" style="min-width:0"><dt>Weak at</dt><dd>Naming mismatches (fail quietly), complex joins, custom conversions. Uses reflection.</dd><dt>Pick custom</dt><dd>When mapping is complex or you want explicit control.</dd></dl>
+  </div>
+</section>
+
+<section id="errors">
+  <span class="eyebrow">Advanced · errors</span>
+  <h2>Labelled alarms instead of one beep</h2>
+  <div class="prose stack">
+    <p>Raw JDBC throws <code>SQLException</code> for everything: a typo, a duplicate email, a dead server. It's also <em>checked</em>, so every method must catch it or declare it. Each database also uses its own error codes.</p>
+    <p>JdbcTemplate catches it and throws a specific <strong>DataAccessException</strong> subtype. These are <em>unchecked</em>, so your code isn't forced to catch them, and they're the same whichever database you use. Pick a problem and flip the database.</p>
+  </div>
+  <div class="bench">
+    <div class="toolbar"><button class="btn on" type="button" id="db-my">MySQL</button><button class="btn" type="button" id="db-pg">PostgreSQL</button><span class="note">Watch the raw codes change while Spring's name stays put.</span></div>
+    <div class="errs" id="ex-list"></div>
+    <div class="alarm">
+      <div class="raw"><span class="k">Raw JDBC gives you</span><b id="ex-raw"></b><span class="note" id="ex-rawcode"></span></div>
+      <div class="spring"><span class="k">Spring gives you</span><b><code id="ex-sp"></code></b><span class="note" id="ex-spnote"></span></div>
+      <div><span class="k">What to do</span><span id="ex-do"></span></div>
+    </div>
+  </div>
+  <div class="mer prose" style="max-width:none">
+<pre class="mermaid">
+flowchart TD
+  A["Something goes wrong in the database"] --> B["Driver throws SQLException<br/>checked · vendor codes"]
+  B --> C["JdbcTemplate catches it"]
+  C --> D["Spring reads the codes"]
+  D --> E["Throws a DataAccessException subtype<br/>unchecked · same for every database"]
+  E --> F["DuplicateKeyException"]
+  E --> G["DataIntegrityViolationException"]
+  E --> H["BadSqlGrammarException"]
+  E --> I["CannotGetJdbcConnectionException"]
+  E --> J["EmptyResult / IncorrectResultSize"]
+</pre>
+  </div>
+<pre class="code"><code class="language-java">// Turn a database alarm into a message your app understands
+try {
+    studentRepository.save(student);
+} catch (DuplicateKeyException e) {
+    throw new EmailAlreadyExistsException(student.getEmail());
+}
+// Everything else (server down, bad SQL) can bubble up to one central error handler.</code></pre>
+  <h3>Break it: what does the user see?</h3>
+  <p class="prose">Your <code>findById()</code> turns an exception into <code>Optional.empty()</code>, and the controller then answers "404 student not found". Choose what you catch and see what happens for each problem.</p>
+  <div class="bench">
+    <div class="toolbar"><button class="btn on" type="button" id="cs-narrow">catch (EmptyResultDataAccessException e)</button><button class="btn" type="button" id="cs-wide">catch (DataAccessException e)</button></div>
+    <div style="overflow-x:auto"><table class="cmp" id="cs-table" style="min-width:560px"></table></div>
+  </div>
+</section>
+
+<section id="flow">
+  <span class="eyebrow">Advanced · the complete trip</span>
+  <h2>Everything together, one call</h2>
+  <div class="bench" id="fl">
+    <div class="toolbar"><button class="btn on" type="button" id="fl-ins">save() · insert</button><button class="btn" type="button" id="fl-sel">findAll() · select</button></div>
+    <ol class="timeline" id="fl-list"></ol>
+  </div>
+  <div class="mer prose" style="max-width:none">
+<pre class="mermaid">
+flowchart LR
+  C["Controller"] --> S["Service"] --> R["Repository"]
+  R --> X["Spring JDBC today<br/>JPA or Hibernate tomorrow"]
+</pre>
+    <div class="cap">Controller and service don't know which database tool the repository uses. You can change it later with little impact above.</div>
+  </div>
+</section>
+
+<section id="compare">
+  <span class="eyebrow">Side by side</span>
+  <h2>Raw JDBC vs Spring JDBC</h2>
+  <div class="tbl-wrap">
+    <table class="cmp">
+      <thead><tr><th>Area</th><th>Raw JDBC</th><th>Spring JDBC</th></tr></thead>
+      <tbody>
+        <tr><td><b>Writing SQL</b></td><td>You, full control</td><td>You, full control</td></tr>
+        <tr><td><b>Getting a connection</b></td><td>You, with DriverManager</td><td>From the DataSource (HikariCP pool)</td></tr>
+        <tr><td><b>Creating the statement</b></td><td>You</td><td>JdbcTemplate</td></tr>
+        <tr><td><b>Filling the blanks</b></td><td>One <code>setXxx()</code> per value</td><td>Values passed as method arguments</td></tr>
+        <tr><td><b>Looping rows</b></td><td>Your <code>while (rs.next())</code></td><td>JdbcTemplate</td></tr>
+        <tr><td><b>Row → object</b></td><td>Your code inline</td><td>Your RowMapper</td></tr>
+        <tr><td><b>Closing</b></td><td>try-with-resources</td><td>Automatic</td></tr>
+        <tr><td><b>Errors</b></td><td>Checked <code>SQLException</code>, vague, vendor codes</td><td>Unchecked <code>DataAccessException</code> types, same everywhere</td></tr>
+        <tr><td><b>Pooling</b></td><td>Set up separately</td><td>Comes with Boot (HikariCP)</td></tr>
+        <tr><td><b>Boilerplate</b></td><td>High</td><td>Much lower</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="gotcha">
+  <div class="gotcha">
+    <span class="eyebrow" style="color:var(--c4)">The one gotcha worth remembering</span>
+    <h2>"Not found" and "database broken" are different answers</h2>
+    <p class="prose">Wrong belief: "<code>queryForObject()</code> returns null when there's no row" or "just catch <code>DataAccessException</code> and return empty". It throws <code>EmptyResultDataAccessException</code> on zero rows. And catching the parent type hides real outages behind a friendly "not found".</p>
+    <div class="vs">
+      <div><div class="tag bad">✗ Hides outages</div>
+<pre class="code"><code class="language-java">try {
+    return Optional.of(jdbcTemplate.queryForObject(sql, mapper, id));
+} catch (DataAccessException e) {     // catches EVERYTHING
+    return Optional.empty();          // DB down → "404 not found"
+}</code></pre></div>
+      <div><div class="tag ok">✓ Honest</div>
+<pre class="code"><code class="language-java">try {
+    return Optional.of(jdbcTemplate.queryForObject(sql, mapper, id));
+} catch (EmptyResultDataAccessException e) {  // only "zero rows"
+    return Optional.empty();
+}   // other failures keep propagating as errors</code></pre></div>
+    </div>
+    <h3>Smaller traps</h3>
+    <ol class="traps prose">
+      <li><b>Values in the wrong order.</b> <code>update(sql, age, name, email)</code> compiles fine but puts the age in the name column. Order must match the <code>?</code>s.</li>
+      <li><b><code>new JdbcTemplate()</code>.</b> It has no DataSource. Inject the bean Boot configured.</li>
+      <li><b>"DataSource means pool."</b> It's only an interface. A pool is one possible implementation.</li>
+      <li><b>"A bigger pool is faster."</b> Not automatically. Too many connections can overload the database. Size it with load tests.</li>
+      <li><b>BeanPropertyRowMapper on a class without setters</b> or a no-arg constructor. Mapping fails or quietly leaves fields empty.</li>
+    </ol>
+  </div>
+</section>
+
+<section id="quiz">
+  <span class="eyebrow">Test yourself · answer out loud before opening</span>
+  <h2>Recall check</h2>
+  <div class="stack prose">
+    <details class="q"><summary>1. What does Spring JDBC take off your plate, and what stays your job?</summary><p>Spring: getting the connection, creating the statement, binding values, running, looping rows, closing, translating exceptions. You: SQL, values in order, row mapping, and what the result means.</p></details>
+    <details class="q"><summary>2. Is a DataSource a connection? Is it a pool?</summary><p>Neither, necessarily. It's an interface that provides connections. A pool like HikariDataSource can implement it.</p></details>
+    <details class="q"><summary>3. With a pool, what does connection.close() do?</summary><p>Usually returns the connection to the pool for reuse instead of shutting it down.</p></details>
+    <details class="q"><summary>4. Predict: pool size 3, all 3 busy, a 4th request arrives. What happens?</summary><p>It waits. If a connection comes back within connection-timeout, it gets that one. Otherwise the pool throws an error (CannotGetJdbcConnectionException in Spring).</p></details>
+    <details class="q"><summary>5. Which method for: delete by id, list all students, find by id?</summary><p>update(), query(), queryForObject() (or query() + findFirst()).</p></details>
+    <details class="q"><summary>6. queryForObject() finds no row. What happens? And 3 rows?</summary><p>Zero rows: EmptyResultDataAccessException. More than one: IncorrectResultSizeDataAccessException. It never returns null for "not found".</p></details>
+    <details class="q"><summary>7. Why not catch DataAccessException and return Optional.empty()?</summary><p>It would report "student not found" when the database is actually down or the SQL is broken. Only EmptyResultDataAccessException means "not found".</p></details>
+    <details class="q"><summary>8. Why does exception translation help if you move from MySQL to PostgreSQL?</summary><p>Your code handles DuplicateKeyException etc., which Spring produces from either database's codes. With raw JDBC you'd rewrite checks for MySQL-specific error codes.</p></details>
+  </div>
+</section>
+
+</div>
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const BR = ['var(--c1)','var(--c2)','var(--c3)','var(--c4)','var(--c5)','var(--c6)'];
+/* ---------- reusable: clickable mindmap ---------- */
+function mindmap(el, data, openDepth = 1){
+  el.innerHTML = `<div class="mm-tools"><button class="btn sm" type="button" data-a="open">Expand all</button><button class="btn sm" type="button" data-a="close">Fold to main branches</button></div><div class="mm-tree"></div><div class="mm-detail"></div>`;
+  const tree = el.querySelector('.mm-tree'), det = el.querySelector('.mm-detail');
+  let sel = null;
+  function show(node, path, color, btn){
+    if(sel) sel.classList.remove('sel'); sel = btn; btn.classList.add('sel');
+    det.style.setProperty('--c', color);
+    det.innerHTML = `<span class="path">${esc(path.join('  ›  '))}</span><b>${esc(node.t)}</b>${node.d || ''}`;
+  }
+  function build(node, level, color, path){
+    const w = document.createElement('div');
+    w.className = 'mm-node lv' + Math.min(level, 3);
+    w.style.setProperty('--c', color);
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'mm-label';
+    b.innerHTML = esc(node.t) + (node.c ? `<span class="mm-count">+${node.c.length}</span>` : '');
+    w.append(b);
+    const p = path.concat(node.t);
+    if(node.c){
+      const k = document.createElement('div'); k.className = 'mm-kids';
+      node.c.forEach((ch, i) => k.append(build(ch, level + 1, level === 0 ? BR[i % BR.length] : color, p)));
+      w.append(k);
+      if(level >= openDepth) w.classList.add('closed');
+    }
+    b.onclick = () => {
+      if(node.c && level > 0){
+        if(w.classList.contains('closed')) w.classList.remove('closed');
+        else if(sel === b) w.classList.add('closed');
+      }
+      show(node, p, color, b);
+    };
+    if(level === 0) setTimeout(() => show(node, p, 'var(--ink)', b));
+    return w;
+  }
+  tree.append(build(data, 0, 'var(--ink)', []));
+  el.querySelector('[data-a=open]').onclick = () => tree.querySelectorAll('.mm-node').forEach(n => n.classList.remove('closed'));
+  el.querySelector('[data-a=close]').onclick = () => tree.querySelectorAll('.mm-node.lv1').forEach(n => n.classList.add('closed'));
+}
+
+/* ---------- reusable: stepper ---------- */
+function stepper(root, frames, render, delay = 1600){
+  const bar = document.createElement('div'); bar.className = 'toolbar';
+  bar.innerHTML = `<button class="btn" type="button" data-a="back">◀ Back</button><button class="btn primary" type="button" data-a="next">Next ▶</button><button class="btn" type="button" data-a="play">▶ Play</button><button class="btn" type="button" data-a="reset">↺ Restart</button><span class="score" data-a="n"></span>`;
+  root.prepend(bar);
+  const st = { i:0, t:null, frames };
+  const draw = () => {
+    render(st.frames[st.i], st.i);
+    bar.querySelector('[data-a=n]').textContent = `step ${st.i + 1} / ${st.frames.length}`;
+    bar.querySelector('[data-a=next]').disabled = st.i >= st.frames.length - 1;
+    bar.querySelector('[data-a=back]').disabled = st.i === 0;
+    bar.querySelector('[data-a=play]').textContent = st.t ? '⏸ Pause' : '▶ Play';
+  };
+  const stop = () => { clearTimeout(st.t); st.t = null; };
+  const tick = () => { if(st.i < st.frames.length - 1){ st.i++; st.t = setTimeout(tick, delay); } else stop(); draw(); };
+  bar.onclick = e => {
+    const a = e.target.closest('button')?.dataset.a; if(!a) return;
+    if(a === 'next'){ stop(); st.i = Math.min(st.frames.length - 1, st.i + 1); }
+    if(a === 'back'){ stop(); st.i = Math.max(0, st.i - 1); }
+    if(a === 'reset'){ stop(); st.i = 0; }
+    if(a === 'play'){ if(st.t) stop(); else { if(st.i >= st.frames.length - 1) st.i = 0; st.t = setTimeout(tick, 250); } }
+    draw();
+  };
+  draw();
+  return { reload(f){ stop(); st.frames = f; st.i = Math.min(st.i, f.length - 1); draw(); }, draw };
+}
+
+/* ---------- big mindmap ---------- */
+mindmap($('#mm-big'), {
+  t:'Spring JDBC', d:'Spring does the repetitive JDBC steps for you. You still write the SQL and decide how rows become objects.',
+  c:[
+    {t:'The problem', d:'Raw JDBC repeats the same open → prepare → run → catch → close shell in every method.', c:[
+      {t:'Same 7 steps every time', d:'Get connection, create statement, bind values, execute, process result, handle errors, close.'},
+      {t:'Only 3 things change', d:'The SQL, the parameter values, and how results become objects.'}]},
+    {t:'Template idea', d:'Spring runs the fixed recipe; you plug in the parts that change. Class: <code>JdbcTemplate</code>.', c:[
+      {t:'Spring\'s part', d:'Connection, statement, execution, cleanup, exception translation.'},
+      {t:'Your part', d:'SQL, values, RowMapper, and what the result means for your app.'},
+      {t:'Still JDBC inside', d:'Connection, PreparedStatement and ResultSet are still used. Spring just manages them.'}]},
+    {t:'DataSource', d:'A Java interface whose job is <code>getConnection()</code>. A connection provider.', c:[
+      {t:'Not a connection', d:'It hands connections out. It isn\'t one.'},
+      {t:'Not always a pool', d:'Some implementations open a new connection every time. A pool is one option.'},
+      {t:'Repository stays clean', d:'URL and password live in config, not in your repository.'}]},
+    {t:'Connection pool', d:'A fixed set of reusable connections, lent out and returned.', c:[
+      {t:'Borrow and return', d:'<code>getConnection()</code> borrows. <code>close()</code> gives it back to the pool.'},
+      {t:'All busy → wait', d:'Extra requests wait. After <code>connection-timeout</code> they fail.'},
+      {t:'HikariCP', d:'The pool Spring Boot uses by default with starter-jdbc or starter-data-jpa.'},
+      {t:'Size carefully', d:'Bigger isn\'t automatically faster. Each connection costs memory and database capacity.'}]},
+    {t:'Boot setup', d:'Add dependencies and properties; Boot builds the beans.', c:[
+      {t:'Dependencies', d:'<code>spring-boot-starter-jdbc</code> + <code>mysql-connector-j</code> (+ web for REST).'},
+      {t:'Properties', d:'<code>spring.datasource.*</code> for the database, <code>spring.datasource.hikari.*</code> for the pool.'},
+      {t:'Auto-configured beans', d:'Boot creates a HikariDataSource and a JdbcTemplate. Just inject them.'}]},
+    {t:'JdbcTemplate methods', d:'Three you\'ll use constantly.', c:[
+      {t:'update()', d:'INSERT, UPDATE, DELETE. Returns how many rows changed.'},
+      {t:'query()', d:'Any number of rows. Returns a List; empty when nothing matches.'},
+      {t:'queryForObject()', d:'Exactly one row. Zero rows or several rows throw an exception.'}]},
+    {t:'RowMapper', d:'Turns one row into one object. Spring calls it once per row.', c:[
+      {t:'Class or lambda', d:'A class is clearer while learning; a lambda is short.'},
+      {t:'BeanPropertyRowMapper', d:'Auto-matches columns to setters by name; <code>first_name</code> → <code>firstName</code>.'},
+      {t:'Reuse one instance', d:'It keeps no changing state, so share it.'}]},
+    {t:'Errors', d:'Spring turns SQLException into clear, unchecked DataAccessException types.', c:[
+      {t:'SQLException is vague', d:'Checked, one type for every problem, codes differ per database.'},
+      {t:'Specific types', d:'DuplicateKey, DataIntegrityViolation, BadSqlGrammar, CannotGetJdbcConnection, EmptyResult, IncorrectResultSize.'},
+      {t:'Not found ≠ broken', d:'Only EmptyResultDataAccessException means "no such row". Let real failures propagate.'}]}
+  ]
+});
+
+/* ---------- before / after code ---------- */
+const RAW = [
+  ['m','public boolean save(Student student) {'],
+  ['m','    String sql = "INSERT INTO students(name, email, age) VALUES (?, ?, ?)";'],
+  ['b','    try ('],
+  ['b','        Connection connection ='],
+  ['b','                DriverManager.getConnection(URL, USERNAME, PASSWORD);'],
+  ['b','        PreparedStatement ps = connection.prepareStatement(sql)'],
+  ['b','    ) {'],
+  ['v','        ps.setString(1, student.getName());'],
+  ['v','        ps.setString(2, student.getEmail());'],
+  ['v','        ps.setInt(3, student.getAge());'],
+  ['b','        int rowsAffected = ps.executeUpdate();'],
+  ['m','        return rowsAffected == 1;'],
+  ['b','    } catch (SQLException exception) {'],
+  ['b','        exception.printStackTrace();'],
+  ['b','        return false;'],
+  ['b','    }'],
+  ['m','}']];
+const SP = [
+  ['m','public boolean save(Student student) {'],
+  ['m','    String sql = "INSERT INTO students(name, email, age) VALUES (?, ?, ?)";'],
+  ['m','    int rowsAffected = jdbcTemplate.update(sql,'],
+  ['v','            student.getName(),'],
+  ['v','            student.getEmail(),'],
+  ['v','            student.getAge());'],
+  ['m','    return rowsAffected == 1;'],
+  ['m','}']];
+function lines(el, arr, title){ el.innerHTML = `<div class="ttl">${title}</div>` + arr.map(([k, t]) => `<div class="${k}">${esc(t)}</div>`).join(''); }
+lines($('#raw-lines'), RAW, `Raw JDBC · ${RAW.length} lines`);
+lines($('#sp-lines'), SP, `JdbcTemplate · ${SP.length} lines`);
+$('#hl-btn').onclick = () => {
+  const on = !$('#raw-lines').classList.contains('hl');
+  ['#raw-lines','#sp-lines'].forEach(s => $(s).classList.toggle('hl', on));
+  $('#hl-btn').textContent = 'Highlight: ' + (on ? 'on' : 'off'); $('#hl-btn').classList.toggle('on', on);
+};
+
+/* ---------- who does what game ---------- */
+const WHO = [
+  ['Get a database connection','S','Spring asks the DataSource for one.'],
+  ['Write the SQL','Y','Spring never writes SQL for you. That\'s the point of Spring JDBC.'],
+  ['Create the PreparedStatement','S','JdbcTemplate creates it internally.'],
+  ['Give the parameter values in the right order','Y','You pass them as arguments. Order must match the ? blanks.'],
+  ['Bind the values to the ? blanks','S','The setString/setInt calls happen inside Spring.'],
+  ['Run the statement','S','JdbcTemplate executes it.'],
+  ['Loop over the returned rows','S','No more while (rs.next()) in your code.'],
+  ['Turn one row into a Student','Y','That\'s your RowMapper.'],
+  ['Close the statement and give the connection back','S','Automatic, even if an error happens.'],
+  ['Translate SQLException into a clear exception','S','You get DataAccessException subtypes.'],
+  ['Decide what "0 rows affected" means for your app','Y','Spring returns the number. You decide it means "not found".']];
+function whoGame(){
+  let right = 0, done = 0;
+  $('#who-game').innerHTML = WHO.map((w, i) => `<div class="qrow" data-i="${i}"><span>${esc(w[0])}</span><div class="opts"><button class="btn sm" type="button" data-w="S">Spring</button><button class="btn sm" type="button" data-w="Y">You</button></div><div class="fb" hidden></div></div>`).join('');
+  const score = () => $('#who-score').textContent = done ? `${right} / ${done} right · ${WHO.length - done} left` : `${WHO.length} steps to sort`;
+  $('#who-game').onclick = e => {
+    const b = e.target.closest('button[data-w]'); if(!b) return;
+    const row = b.closest('.qrow'); if(row.classList.contains('right') || row.classList.contains('wrong')) return;
+    const w = WHO[+row.dataset.i], ok = b.dataset.w === w[1];
+    row.classList.add(ok ? 'right' : 'wrong'); done++; if(ok) right++;
+    const fb = row.querySelector('.fb'); fb.hidden = false;
+    fb.innerHTML = (ok ? '<span class="ok">✓</span> ' : `<span class="bad">✗ ${w[1] === 'S' ? 'Spring' : 'You'}.</span> `) + w[2];
+    score();
+  };
+  score();
+}
+$('#who-reset').onclick = whoGame; whoGame();
+
+/* ---------- pool simulator ---------- */
+const TIMEOUT = 4000, OPEN_COST = 1300;
+const P = { mode:'pool', size:3, conns:[], reqs:[], next:1, served:0, failed:0, created:0, peak:0, timer:null, log:[] };
+function pReset(){
+  clearInterval(P.timer); P.timer = null;
+  P.conns = Array.from({length:P.size}, (_, i) => ({id:i+1, by:null}));
+  P.reqs = []; P.next = 1; P.served = 0; P.failed = 0; P.log = [];
+  P.created = P.mode === 'pool' ? P.size : 0; P.peak = P.mode === 'pool' ? P.size : 0;
+  $('#p-msg').innerHTML = P.mode === 'pool'
+    ? `The pool opened <b>${P.size}</b> connections at startup and keeps them. Send requests: each borrows one, runs its query, then <code>close()</code> puts it back.`
+    : 'No pool: every request opens a brand-new connection (network + login, the slow orange part), runs, then destroys it. Nothing limits how many are open at once.';
+  pRender(performance.now());
+}
+function pAdd(n){
+  const now = performance.now();
+  for(let k = 0; k < n; k++){
+    const r = { id:P.next++, t0:now + k * 120, dur:2000 + Math.random() * 1500, state:'wait' };
+    if(P.mode === 'none'){ r.state = 'connect'; r.until = r.t0 + OPEN_COST; P.created++; }
+    P.reqs.push(r);
+  }
+  if(!P.timer) P.timer = setInterval(pTick, 100);
+  pTick();
+}
+function pTick(){
+  const now = performance.now();
+  for(const r of P.reqs){
+    if(r.t0 > now) continue;
+    if(r.state === 'connect' && now >= r.until){ r.state = 'run'; r.start = now; r.until = now + r.dur; }
+    else if(r.state === 'run' && now >= r.until){
+      r.state = 'done'; P.served++;
+      if(P.mode === 'pool'){ P.conns.find(c => c.by === r.id).by = null; P.log.unshift(`#${r.id} done · waited ${((r.start - r.t0)/1000).toFixed(1)} s · connection returned to pool`); }
+      else P.log.unshift(`#${r.id} done · spent ${(OPEN_COST/1000).toFixed(1)} s just opening · connection destroyed`);
+    }
+    else if(r.state === 'wait' && now - r.t0 > TIMEOUT){ r.state = 'fail'; P.failed++; P.log.unshift(`#${r.id} gave up after ${TIMEOUT/1000} s · CannotGetJdbcConnectionException`); }
+  }
+  if(P.mode === 'pool'){
+    for(const r of P.reqs.filter(r => r.state === 'wait' && r.t0 <= now)){
+      const c = P.conns.find(c => c.by === null); if(!c) break;
+      c.by = r.id; r.conn = c.id; r.state = 'run'; r.start = now; r.until = now + r.dur;
+    }
+  } else {
+    P.peak = Math.max(P.peak, P.reqs.filter(r => r.state === 'connect' || r.state === 'run').length);
+  }
+  P.log = P.log.slice(0, 10);
+  pRender(now);
+  if(!P.reqs.some(r => ['wait','connect','run'].includes(r.state))){ clearInterval(P.timer); P.timer = null; }
+}
+function pRender(now){
+  const bar = (a, b) => `<div class="bar"><i style="width:${Math.max(0, Math.min(100, a / b * 100))}%"></i></div>`;
+  if(P.mode === 'pool'){
+    $('#p-slots-title').textContent = `The pool · ${P.size} connections (pans on the rack)`;
+    $('#p-slots').innerHTML = P.conns.map(c => {
+      const r = c.by && P.reqs.find(x => x.id === c.by);
+      return r ? `<div class="slot busy"><b>Connection ${c.id}</b><span>busy · request #${r.id}</span>${bar(now - r.start, r.dur)}</div>`
+               : `<div class="slot"><b>Connection ${c.id}</b><span>free, ready to lend</span></div>`;
+    }).join('');
+  } else {
+    const open = P.reqs.filter(r => (r.state === 'connect' || r.state === 'run') && r.t0 <= now);
+    $('#p-slots-title').textContent = `Connections open at the database right now: ${open.length}`;
+    $('#p-slots').innerHTML = open.length ? open.map(r => r.state === 'connect'
+      ? `<div class="slot opening"><b>new for #${r.id}</b><span>opening: network + login</span>${bar(now - r.t0, OPEN_COST)}</div>`
+      : `<div class="slot busy"><b>new for #${r.id}</b><span>running query</span>${bar(now - r.start, r.dur)}</div>`).join('')
+      : '<span class="note">none open</span>';
+  }
+  const waiting = P.reqs.filter(r => r.state === 'wait' && r.t0 <= now);
+  $('#p-queue').innerHTML = P.mode === 'none' ? '<span class="note">No pool, so nobody waits for a connection. Each request opens its own.</span>'
+    : waiting.length ? waiting.map(r => `<div class="qchip">#${r.id} waiting ${((now - r.t0)/1000).toFixed(1)} s${bar(now - r.t0, TIMEOUT)}</div>`).join('')
+    : '<span class="note">nobody waiting</span>';
+  $('#ps-served').textContent = P.served; $('#ps-failed').textContent = P.failed;
+  $('#ps-created').textContent = P.created; $('#ps-peak').textContent = P.peak;
+  $('#p-log').innerHTML = P.log.map(l => `<div>${esc(l)}</div>`).join('');
+}
+$('#p-one').onclick = () => pAdd(1);
+$('#p-burst').onclick = () => pAdd(8);
+$('#p-reset').onclick = pReset;
+$('#p-size').oninput = e => { P.size = +e.target.value; $('#p-size-v').textContent = P.size; pReset(); };
+$('#pm-pool').onclick = () => { P.mode = 'pool'; $('#pm-pool').classList.add('on'); $('#pm-none').classList.remove('on'); $('#p-size').disabled = false; pReset(); };
+$('#pm-none').onclick = () => { P.mode = 'none'; $('#pm-none').classList.add('on'); $('#pm-pool').classList.remove('on'); $('#p-size').disabled = true; pReset(); };
+pReset();
+
+/* ---------- 3x3 explorer ---------- */
+const G = {
+  'update()': ['0 · return false', '1 · return true', '3 · rows changed', [
+    'No row matched the WHERE. update() returns 0. Not an error: your code turns it into "not found".',
+    'One row changed. update() returns 1. The normal case for a primary-key update or delete.',
+    'A WHERE that matched 3 rows returns 3. With WHERE id = ? this can\'t happen, because the id is unique.']],
+  'query()': ['[ ] empty list', '[Student1]', '[S1, S2, S3]', [
+    'Nothing matched, so you get an empty list, never null. Safe to loop over right away.',
+    'A list with one Student. Use .stream().findFirst() if you wanted an Optional.',
+    'A list of three Students. Your RowMapper was called three times.']],
+  'queryForObject()': ['💥 EmptyResult…', 'Student1', '💥 IncorrectResultSize…', [
+    'Throws EmptyResultDataAccessException. It does NOT return null. Catch exactly this type if "not found" is normal.',
+    'Returns the single mapped Student. This is the only happy path.',
+    'Throws IncorrectResultSizeDataAccessException: you promised one row and got three.']]};
+$('#g33').innerHTML = '<div></div><div class="h">0 rows</div><div class="h">1 row</div><div class="h">3 rows</div>' +
+  Object.entries(G).map(([m, v]) => `<div class="rh">${m}</div>` + [0,1,2].map(k => `<button type="button" data-m="${m}" data-k="${k}" class="${v[k].includes('💥') ? 'boom' : 'good'}">${v[k]}</button>`).join('')).join('');
+function g33(m, k){
+  $('#g33').querySelectorAll('button').forEach(b => b.classList.toggle('sel', b.dataset.m === m && +b.dataset.k === k));
+  $('#g33-msg').innerHTML = `<b>${m}</b> with ${['0 rows','1 row','3 rows'][k]} → ${esc(G[m][k])}<span class="real">${G[m][3][k]}</span>`;
+}
+$('#g33').onclick = e => { const b = e.target.closest('button'); if(b) g33(b.dataset.m, +b.dataset.k); };
+g33('queryForObject()', 0);
+
+$('#sp-tabs').onclick = e => {
+  const t = e.target.closest('.tab'); if(!t) return;
+  $('#sp-tabs').querySelectorAll('.tab').forEach(x => x.setAttribute('aria-selected', x === t));
+  document.querySelectorAll('#methods [data-panel]').forEach(p => p.hidden = p.dataset.panel !== t.dataset.tab);
+};
+
+/* ---------- RowMapper stepper ---------- */
+const RROWS = [[1,'Rahul','rahul@gmail.com',24],[2,'Priya','priya@gmail.com',22],[3,'Aman','aman@gmail.com',27]];
+const RMF = [{cur:-1, n:0, out:0, on:false, msg:'You call <b>jdbcTemplate.query(sql, studentRowMapper)</b>. Spring borrows a connection, runs the SELECT and gets back 3 rows.'}];
+RROWS.forEach((r, i) => {
+  RMF.push({cur:i, n:i, out:i, on:true, msg:`Spring moves to row ${i+1} and calls <b>mapRow(rs, ${i})</b>. Your code reads id, name, email, age.`});
+  RMF.push({cur:i, n:i+1, out:i+1, on:false, msg:`Your mapper returns <b>Student{id=${r[0]}, name=${r[1]}}</b>. Spring adds it to the list.`});
+});
+RMF.push({cur:3, n:3, out:3, on:false, msg:'No more rows. Spring closes the ResultSet and statement, returns the connection to the pool, and hands you <b>List&lt;Student&gt;</b> of 3. You wrote mapRow once; Spring called it 3 times.'});
+stepper($('#rm'), RMF, f => {
+  $('#rm-rows').innerHTML = '<tr><th></th><th>id</th><th>name</th><th>age</th></tr>' + RROWS.map((r, i) => `<tr class="${f.cur === i ? 'on' : i < f.cur ? 'read' : ''}"><td class="cur">${f.cur === i ? '☞' : ''}</td><td>${r[0]}</td><td>${r[1]}</td><td>${r[3]}</td></tr>`).join('');
+  $('#rm-mapper').classList.toggle('on', f.on);
+  $('#rm-calls').textContent = `called ${f.on ? f.n + 1 : f.n} time${(f.on ? f.n + 1 : f.n) === 1 ? '' : 's'}`;
+  $('#rm-out').innerHTML = f.out ? RROWS.slice(0, f.out).map(r => `<span class="obj">Student{id=${r[0]}, name=${r[1]}}</span>`).join('') : '<span class="note">List is empty so far</span>';
+  $('#rm-msg').innerHTML = f.msg;
+}, 1500);
+
+/* ---------- BeanPropertyRowMapper matcher ---------- */
+const FIELDS = ['id','name','email','age'];
+function bp(){
+  const col = $('#bp-in').value.trim();
+  const prop = col.toLowerCase().replace(/_([a-z0-9])/g, (m, c) => c.toUpperCase());
+  $('#bp-out').textContent = prop || '—';
+  const setter = prop ? 'set' + prop[0].toUpperCase() + prop.slice(1) + '(...)' : '';
+  $('#bp-msg').innerHTML = !prop ? 'Type a column name.'
+    : FIELDS.includes(prop) ? `<span class="ok">Match.</span> Student has <code>${prop}</code>, so Spring calls <code>${esc(setter)}</code>.`
+    : `<span class="bad">No match in Student</span> (it only has id, name, email, age). Spring looks for <code>${esc(setter)}</code>, doesn't find it, and the value is silently left out. That's the "mapping problems are less obvious" risk.`;
+}
+$('#bp-in').oninput = bp;
+document.querySelectorAll('[data-bp]').forEach(b => b.onclick = () => { $('#bp-in').value = b.dataset.bp; bp(); });
+bp();
+
+/* ---------- exception translator ---------- */
+const EX = [
+  {p:'Same email inserted twice', my:['SQLException: Duplicate entry for key \'email\'', 'MySQL error 1062 · SQLState 23000'], pg:['PSQLException: duplicate key value violates unique constraint', 'SQLState 23505'], sp:'DuplicateKeyException', note:'A specific kind of integrity violation.', do:'Expected sometimes. Catch it and throw <code>EmailAlreadyExistsException</code> so the user sees a clear message.', nf:false},
+  {p:'Foreign key or NOT NULL broken', my:['SQLException: Column cannot be null / foreign key fails', 'MySQL error 1048 or 1452 · SQLState 23000'], pg:['PSQLException: null value / violates foreign key', 'SQLState 23502 or 23503'], sp:'DataIntegrityViolationException', note:'The broader family that DuplicateKey belongs to.', do:'Usually bad input. Validate earlier, or turn it into a 400-style error.', nf:false},
+  {p:'Typo in SQL: SELEKT', my:['SQLException: You have an error in your SQL syntax', 'MySQL error 1064 · SQLState 42000'], pg:['PSQLException: syntax error at or near "SELEKT"', 'SQLState 42601'], sp:'BadSqlGrammarException', note:'Also used for unknown columns or tables.', do:'A bug in your code. Fix the SQL. Don\'t catch it.', nf:false},
+  {p:'Database server is down', my:['SQLException: Communications link failure', 'SQLState 08S01'], pg:['PSQLException: Connection refused', 'SQLState 08001'], sp:'CannotGetJdbcConnectionException', note:'Also: wrong host or port, network failure, pool timeout.', do:'Can\'t be fixed in the repository. Let it reach a central error handler (500).', nf:false},
+  {p:'Wrong database password', my:['SQLException: Access denied for user \'root\'@\'localhost\'', 'MySQL error 1045 · SQLState 28000'], pg:['PSQLException: password authentication failed', 'SQLState 28P01'], sp:'CannotGetJdbcConnectionException', note:'Couldn\'t get a connection at all.', do:'Configuration problem. Fix <code>spring.datasource.password</code>.', nf:false},
+  {p:'queryForObject() finds no row', my:['(no SQL error: the query simply returned 0 rows)', ''], pg:['(no SQL error: the query simply returned 0 rows)', ''], sp:'EmptyResultDataAccessException', note:'Thrown by Spring itself, because you promised exactly one row.', do:'The only one that means "not found". Catch it and return <code>Optional.empty()</code>.', nf:true},
+  {p:'queryForObject() finds 3 rows', my:['(no SQL error: the query returned 3 rows)', ''], pg:['(no SQL error: the query returned 3 rows)', ''], sp:'IncorrectResultSizeDataAccessException', note:'Expected one, got several.', do:'Your WHERE isn\'t unique. Fix the query or use query().', nf:false}];
+let exDb = 'my', exI = 3;
+$('#ex-list').innerHTML = EX.map((e, i) => `<button class="btn sm" type="button" data-i="${i}">${esc(e.p)}</button>`).join('');
+function exShow(){
+  const e = EX[exI];
+  $('#ex-list').querySelectorAll('button').forEach((b, x) => b.classList.toggle('on', x === exI));
+  $('#ex-raw').textContent = e[exDb][0]; $('#ex-rawcode').textContent = e[exDb][1];
+  $('#ex-sp').textContent = e.sp; $('#ex-spnote').textContent = e.note; $('#ex-do').innerHTML = e.do;
+}
+$('#ex-list').onclick = ev => { const b = ev.target.closest('button'); if(b){ exI = +b.dataset.i; exShow(); } };
+$('#db-my').onclick = () => { exDb = 'my'; $('#db-my').classList.add('on'); $('#db-pg').classList.remove('on'); exShow(); };
+$('#db-pg').onclick = () => { exDb = 'pg'; $('#db-pg').classList.add('on'); $('#db-my').classList.remove('on'); exShow(); };
+exShow();
+
+/* ---------- catch scope toggle ---------- */
+let wide = false;
+function cs(){
+  const rows = [['Student 7 exists', 'nothing thrown', '200 · shows the student', '200 · shows the student', true],
+    ...EX.filter(e => ['Database server is down','Wrong database password','Typo in SQL: SELEKT','queryForObject() finds no row'].includes(e.p))
+      .map(e => [e.p, e.sp, e.nf ? '404 · student not found' : '500 · error reported, logs show the cause', e.nf ? '404 · student not found' : '404 · "student not found" (a lie)', e.nf])];
+  $('#cs-table').innerHTML = '<thead><tr><th>What happened</th><th>Exception</th><th>User sees</th></tr></thead><tbody>' +
+    rows.map(r => { const out = wide ? r[3] : r[2], liar = wide && !r[4]; return `<tr><td>${esc(r[0])}</td><td><code>${esc(r[1])}</code></td><td class="${liar ? 'bad' : 'ok'}">${liar ? '✗ ' : '✓ '}${esc(out)}</td></tr>`; }).join('') + '</tbody>';
+}
+$('#cs-narrow').onclick = () => { wide = false; $('#cs-narrow').classList.add('on'); $('#cs-wide').classList.remove('on'); cs(); };
+$('#cs-wide').onclick = () => { wide = true; $('#cs-wide').classList.add('on'); $('#cs-narrow').classList.remove('on'); cs(); };
+cs();
+
+/* ---------- full flow ---------- */
+const ACT = { You:'var(--c3)', JdbcTemplate:'var(--c1)', HikariCP:'var(--c2)', MySQL:'var(--c5)', RowMapper:'var(--c6)' };
+const FLOWS = {
+  ins: [['You','StudentRepository.save(student)'],['JdbcTemplate','update(sql, name, email, age) called'],['JdbcTemplate','Asks the DataSource for a connection'],['HikariCP','Lends a pooled connection'],['JdbcTemplate','Creates the PreparedStatement'],['JdbcTemplate','Binds the three values to the ? blanks'],['MySQL','Runs the INSERT'],['MySQL','Returns the affected-row count: 1'],['JdbcTemplate','Closes the statement'],['HikariCP','Gets the connection back for reuse'],['You','Receive 1 → return true']],
+  sel: [['You','StudentRepository.findAll()'],['JdbcTemplate','query(sql, rowMapper) called'],['HikariCP','Lends a pooled connection'],['JdbcTemplate','Creates and runs the PreparedStatement'],['MySQL','Returns a ResultSet of rows'],['JdbcTemplate','Moves through the rows one by one'],['RowMapper','Turns each row into a Student'],['JdbcTemplate','Collects the Students into a List'],['JdbcTemplate','Closes the ResultSet and statement'],['HikariCP','Gets the connection back for reuse'],['You','Receive List&lt;Student&gt;']]};
+let flKey = 'ins';
+const flFrames = () => FLOWS[flKey].map((_, i) => i);
+const flStep = stepper($('#fl'), flFrames(), i => {
+  $('#fl-list').innerHTML = FLOWS[flKey].map(([a, t], k) => `<li class="${k === i ? 'on' : k < i ? 'done' : ''}"><span class="actor" style="--c:${ACT[a]}">${a}</span><span>${t}</span></li>`).join('');
+}, 1200);
+$('#fl-ins').onclick = () => { flKey = 'ins'; $('#fl-ins').classList.add('on'); $('#fl-sel').classList.remove('on'); flStep.reload(flFrames()); };
+$('#fl-sel').onclick = () => { flKey = 'sel'; $('#fl-sel').classList.add('on'); $('#fl-ins').classList.remove('on'); flStep.reload(flFrames()); };
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-properties.min.js"></script>
+<script>
+/* Diagram fallback. The claude.ai viewer draws <pre class="mermaid"> blocks itself. When this page is opened as a plain
+   file (or anywhere else that doesn't), load Mermaid from a CDN and draw them, instead of showing the raw diagram text. */
+(function () {
+  const blocks = () => Array.from(document.querySelectorAll('pre.mermaid'));
+  if (!blocks().length) return;
+  const drawn = p => !!p.querySelector('svg');
+  function load() {
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/mermaid@10.9.3/dist/mermaid.min.js';
+    s.onload = () => {
+      const t = document.documentElement.dataset.theme;
+      const dark = t === 'dark' || (t !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
+      try {
+        mermaid.initialize({ startOnLoad: false, theme: dark ? 'dark' : 'default', securityLevel: 'strict' });
+        mermaid.run({ nodes: blocks().filter(p => !drawn(p)) });
+      } catch (e) {}
+    };
+    s.onerror = () => blocks().filter(p => !drawn(p)).forEach(p =>
+      p.insertAdjacentHTML('afterend', '<p style="font-size:.85rem;opacity:.7">This diagram needs an internet connection to draw.</p>'));
+    document.head.append(s);
+  }
+  addEventListener('load', () => setTimeout(() => {
+    // the claude.ai viewer adds its own Mermaid runtime (a global `mermaid` plus .mermaid-diagram mounts): leave it alone
+    if (window.mermaid || document.querySelector('.mermaid-diagram, [data-claude-mermaid-claimed]')) return;
+    if (!blocks().every(drawn)) load();
+  }, 1200));
+})();
+</script>

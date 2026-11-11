@@ -1,0 +1,1227 @@
+<title>JDBC Fundamentals Lab</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;600;700&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column (~70ch) that widens into full-width "lab benches" for each interactive part. */
+:root{
+  --bg:#F1F3F6; --surface:#FFFFFF; --sunk:#E7EBF0; --ink:#131B25; --muted:#576373; --line:#D3D9E1;
+  --c1:#4A54CF; --c2:#B8720C; --c3:#1F8A55; --c4:#CF3463; --c5:#0E7C8C; --c6:#8A3FB8;
+  --c1s:#E2E4FA; --c2s:#F6E7CF; --c3s:#D5EFE1; --c4s:#F9DAE3; --c5s:#D3EEF1; --c6s:#EEDFF8;
+  --code-bg:#F7F8FA; --tk-kw:#7A2FB8; --tk-str:#1F7A4A; --tk-com:#7A8594; --tk-num:#B35A00; --tk-fn:#2550C0; --tk-cls:#A0306A;
+  --f-display:'Familjen Grotesk','Segoe UI',system-ui,sans-serif;
+  --f-body:'Atkinson Hyperlegible','Segoe UI',system-ui,sans-serif;
+  --f-mono:'JetBrains Mono',ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0C1117; --surface:#141B24; --sunk:#1B2430; --ink:#E4E9EF; --muted:#93A0AF; --line:#2A3441;
+  --c1:#8D95FF; --c2:#ECA944; --c3:#52C889; --c4:#FF6B93; --c5:#4FD0E0; --c6:#C99BFF;
+  --c1s:#232853; --c2s:#3B2C12; --c3s:#153626; --c4s:#431828; --c5s:#0F3439; --c6s:#33204A;
+  --code-bg:#10161E; --tk-kw:#C79BFF; --tk-str:#7FD6A2; --tk-com:#6F7C8C; --tk-num:#F2B266; --tk-fn:#86A9FF; --tk-cls:#F59BC6;
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0C1117; --surface:#141B24; --sunk:#1B2430; --ink:#E4E9EF; --muted:#93A0AF; --line:#2A3441;
+  --c1:#8D95FF; --c2:#ECA944; --c3:#52C889; --c4:#FF6B93; --c5:#4FD0E0; --c6:#C99BFF;
+  --c1s:#232853; --c2s:#3B2C12; --c3s:#153626; --c4s:#431828; --c5s:#0F3439; --c6s:#33204A;
+  --code-bg:#10161E; --tk-kw:#C79BFF; --tk-str:#7FD6A2; --tk-com:#6F7C8C; --tk-num:#F2B266; --tk-fn:#86A9FF; --tk-cls:#F59BC6;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:17px;line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 64px}
+.wrap{max-width:1120px;margin:0 auto}
+.prose{max-width:70ch}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;line-height:1.15;margin:0}
+h1{font-size:clamp(2.2rem,5.5vw,3.6rem);font-weight:700;letter-spacing:-.02em}
+h2{font-size:clamp(1.5rem,3.2vw,2rem);font-weight:700;letter-spacing:-.01em}
+h3{font-size:1.15rem;font-weight:600}
+p{margin:0}
+code,kbd{font-family:var(--f-mono);font-size:.86em}
+:not(pre)>code{background:var(--sunk);padding:.1em .35em;border-radius:4px}
+a{color:var(--c1)}
+section{padding-block:52px 8px;display:grid;gap:18px}
+.eyebrow{font-family:var(--f-mono);font-size:.74rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.lead{font-size:1.12rem;color:var(--muted)}
+.stack{display:grid;gap:14px}
+.note{font-size:.92rem;color:var(--muted)}
+
+header.hero{padding-block:52px 8px;display:grid;gap:22px}
+.hero h1 em{font-style:normal;color:var(--c1)}
+.strip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;max-width:860px}
+.strip div{border-top:3px solid var(--line);padding-top:10px}
+.strip div:nth-child(1){border-color:var(--c1)} .strip div:nth-child(2){border-color:var(--c2)} .strip div:nth-child(3){border-color:var(--c3)}
+.strip b{font-family:var(--f-display);font-size:1.05rem;display:block}
+.strip span{color:var(--muted);font-size:.95rem}
+.toc{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:.95rem;padding:0;margin:0;list-style:none}
+.toc a{color:var(--muted);text-decoration:none;border-bottom:1px solid var(--line)}
+.toc a:hover{color:var(--ink);border-color:var(--ink)}
+.toc .lvl{font-family:var(--f-mono);font-size:.7rem;color:var(--muted);margin-right:4px}
+.series{display:flex;flex-wrap:wrap;gap:10px;align-items:center;font-size:.9rem;color:var(--muted)}
+.series .here{background:var(--ink);color:var(--bg);padding:4px 10px;border-radius:999px;font-weight:700}
+.series a{padding:4px 10px;border:1px solid var(--line);border-radius:999px;text-decoration:none;color:var(--ink)}
+
+.map{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;margin:0;padding:16px 18px;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.map dt{font-weight:700}
+.map dd{margin:0;color:var(--muted)}
+.map dd code{color:var(--ink)}
+@media (max-width:560px){.map{grid-template-columns:minmax(0,1fr)}.map dd{margin-bottom:6px}}
+
+button,select,input[type=text]{font:inherit;font-size:.92rem;color:var(--ink)}
+.btn{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:7px 12px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;line-height:1.2}
+.btn:hover{border-color:var(--muted)}
+.btn:disabled{opacity:.4;cursor:default}
+.btn.primary{background:var(--ink);color:var(--bg);border-color:var(--ink);min-width:86px;justify-content:center}
+.btn.sm{padding:4px 9px;font-size:.82rem}
+.btn.on{border-color:var(--c1);background:var(--c1s)}
+.btn:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visible,.mm-label:focus-visible{outline:2px solid var(--c1);outline-offset:2px}
+select,input[type=text]{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:7px 10px}
+
+.bench{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;display:grid;gap:16px;min-width:0}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.narr{background:var(--sunk);border-radius:10px;padding:12px 14px;min-height:3.2em}
+.narr b{font-family:var(--f-mono);font-weight:600}
+.narr .real{display:block;margin-top:6px;font-size:.88rem;color:var(--muted)}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px}
+@media (max-width:820px){.two{grid-template-columns:minmax(0,1fr)}.strip{grid-template-columns:minmax(0,1fr)}}
+
+/* mermaid */
+.mer{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;overflow-x:auto}
+.mer pre.mermaid{margin:0;font-family:var(--f-mono);font-size:.8rem;background:none;text-align:center;color:var(--ink)}
+.mer .cap{font-size:.8rem;color:var(--muted);margin-top:6px}
+
+/* interactive mindmap */
+.mm{display:grid;gap:12px}
+.mm-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.mm-tree{overflow-x:auto;padding:6px 2px 10px}
+.mm-node{display:flex;align-items:center}
+.mm-kids{display:flex;flex-direction:column;position:relative;padding-left:18px}
+.mm-kids::before{content:"";position:absolute;left:0;top:50%;width:18px;border-top:2px solid var(--line)}
+.mm-kids>.mm-node{position:relative;padding:4px 0 4px 20px}
+.mm-kids>.mm-node::before{content:"";position:absolute;left:0;top:50%;width:20px;border-top:2px solid color-mix(in srgb,var(--c) 55%,var(--line))}
+.mm-kids>.mm-node::after{content:"";position:absolute;left:0;top:0;bottom:0;border-left:2px solid color-mix(in srgb,var(--c) 55%,var(--line))}
+.mm-kids>.mm-node:first-child::after{top:50%}
+.mm-kids>.mm-node:last-child::after{bottom:50%}
+.mm-kids>.mm-node:only-child::after{display:none}
+.mm-node.closed>.mm-kids{display:none}
+.mm-label{flex:none;max-width:230px;text-align:left;border:2px solid var(--c);background:color-mix(in srgb,var(--c) 12%,var(--surface));color:var(--ink);border-radius:999px;padding:5px 12px;cursor:pointer;font-weight:700;font-size:.88rem;line-height:1.25;display:inline-flex;gap:6px;align-items:center}
+.mm-node.lv0>.mm-label{font-family:var(--f-display);font-size:1.1rem;padding:10px 16px;border-radius:14px;background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.mm-node.lv2>.mm-label,.mm-node.lv3>.mm-label{font-weight:400;border-width:1.5px;background:var(--surface);border-radius:8px;font-size:.84rem}
+.mm-label.sel{box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 35%,transparent)}
+.mm-count{font-family:var(--f-mono);font-size:.7rem;background:var(--c);color:var(--surface);border-radius:999px;padding:0 6px;display:none}
+.mm-node.closed>.mm-label .mm-count{display:inline}
+.mm-detail{border-left:4px solid var(--c,var(--c1));background:var(--sunk);border-radius:0 10px 10px 0;padding:12px 14px;min-height:4em}
+.mm-detail b{font-family:var(--f-display);font-size:1.05rem;display:block;margin-bottom:2px}
+.mm-detail .path{font-family:var(--f-mono);font-size:.72rem;color:var(--muted);display:block;margin-bottom:4px}
+
+/* journey lane */
+.lane{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;align-items:stretch}
+.stop{border:2px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center;display:grid;gap:4px;align-content:start;transition:all .25s;background:var(--bg)}
+.stop b{font-family:var(--f-display);font-size:.95rem}
+.stop small{color:var(--muted);font-size:.74rem;line-height:1.3}
+.stop.on{border-color:var(--c4);background:var(--c4s);transform:translateY(-3px)}
+.stop.done{border-color:var(--c3)}
+.pkt{min-height:2.2em;text-align:center;font-family:var(--f-mono);font-size:.78rem;color:var(--c4);font-weight:600}
+@media (max-width:640px){.lane{grid-template-columns:minmax(0,1fr)}.stop.on{transform:none}}
+.jr-two{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:820px){.jr-two{grid-template-columns:minmax(0,1fr)}}
+.jr-code-h{font-family:var(--f-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+#jr-code div.hid{color:var(--muted);font-style:italic}
+#jr-code div.hid.on{color:var(--ink)}
+.jr-key{font-size:.8rem;color:var(--muted);margin-top:6px}
+
+/* url decoder */
+.url{font-family:var(--f-mono);font-size:clamp(.85rem,2.6vw,1.15rem);display:flex;flex-wrap:wrap;gap:2px;overflow-x:auto}
+.url button{font-family:var(--f-mono);font-size:inherit;border:none;border-bottom:3px solid var(--c);background:color-mix(in srgb,var(--c) 10%,transparent);color:var(--ink);padding:4px 3px;cursor:pointer;border-radius:4px 4px 0 0}
+.url button.sel{background:color-mix(in srgb,var(--c) 28%,transparent)}
+.url .sep{padding:4px 0;color:var(--muted)}
+
+/* cards */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.card{border:1px solid var(--line);border-radius:12px;padding:14px;display:grid;gap:6px;background:var(--surface);align-content:start}
+.card b{font-family:var(--f-display);font-size:1.05rem}
+.card .what{font-size:.8rem;font-family:var(--f-mono);color:var(--muted)}
+.card p{font-size:.95rem;color:var(--muted)}
+
+/* game */
+.game{display:grid;gap:10px}
+.qrow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.qrow code{font-size:.82rem;white-space:normal;word-break:break-word}
+.qrow .opts{display:flex;gap:6px;flex-wrap:wrap}
+.qrow .fb{grid-column:1/-1;font-size:.9rem}
+.qrow.right{border-color:var(--c3);background:var(--c3s)}
+.qrow.wrong{border-color:var(--c4);background:var(--c4s)}
+@media (max-width:640px){.qrow{grid-template-columns:minmax(0,1fr)}}
+.score{font-family:var(--f-mono);font-size:.85rem;color:var(--muted)}
+
+/* resultset */
+.rs{width:100%;border-collapse:collapse;font-family:var(--f-mono);font-size:.84rem}
+.rs th,.rs td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left}
+.rs th{color:var(--muted);font-weight:600}
+.rs td.cur{width:4.5em;color:var(--c4);font-weight:700}
+.rs tr.on td{background:var(--c4s)}
+.rs tr.read td{color:var(--muted)}
+.rs tr.before td{color:var(--c4);font-weight:700}
+.objs{display:flex;flex-wrap:wrap;gap:8px;min-height:44px}
+.obj{border:1.5px solid var(--c3);background:var(--c3s);border-radius:8px;padding:5px 9px;font-family:var(--f-mono);font-size:.76rem;animation:pop .3s ease}
+.obj.warn{border-color:var(--c4);background:var(--c4s)}
+@keyframes pop{from{transform:scale(.8);opacity:.3}to{transform:none;opacity:1}}
+.pc{background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:10px 0;font-family:var(--f-mono);font-size:.8rem;line-height:1.55;overflow-x:auto}
+.pc div{padding:0 12px;white-space:pre;border-left:3px solid transparent}
+.pc div.on{background:var(--c4s);border-left-color:var(--c4)}
+.pc .c{color:var(--tk-com)}
+
+/* injection lab */
+.sql{font-family:var(--f-mono);font-size:.86rem;background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:12px 14px;white-space:pre-wrap;word-break:break-word;line-height:1.7}
+.sql .u{background:var(--c3s);border-radius:3px}
+.sql .x{background:var(--c4);color:var(--surface);border-radius:3px}
+.sql .q{color:var(--c1);font-weight:700}
+.verdict{font-weight:700}
+.ok{color:var(--c3)} .bad{color:var(--c4)}
+
+/* tabs + code */
+.tabs{display:flex;gap:4px;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+.tab{background:none;border:none;border-bottom:2px solid transparent;padding:8px 12px;cursor:pointer;color:var(--muted);font-weight:700}
+.tab[aria-selected="true"]{color:var(--ink);border-color:var(--c1)}
+pre.code{background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow-x:auto;margin:0;font-family:var(--f-mono);font-size:.8rem;line-height:1.6;color:var(--ink)}
+pre.code code{font-size:inherit;background:none;padding:0}
+.token.keyword,.token.boolean{color:var(--tk-kw)}
+.token.string,.token.char,.token.attr-value{color:var(--tk-str)}
+.token.comment{color:var(--tk-com);font-style:italic}
+.token.number{color:var(--tk-num)}
+.token.function{color:var(--tk-fn)}
+.token.class-name,.token.tag{color:var(--tk-cls)}
+.token.operator,.token.punctuation{color:var(--muted)}
+.gets{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:.92rem}
+.gets b{font-family:var(--f-mono);font-size:.85rem}
+
+/* nesting */
+.nest{display:grid;gap:0}
+.box{border:2px dashed var(--line);border-radius:12px;padding:10px 12px 12px;display:grid;gap:8px;transition:all .25s;color:var(--muted)}
+.box>.lab{font-family:var(--f-mono);font-size:.8rem;font-weight:600;display:flex;justify-content:space-between;gap:8px}
+.box.open{border-style:solid;color:var(--ink)}
+.box.b1.open{border-color:var(--c1);background:var(--c1s)}
+.box.b2.open{border-color:var(--c2);background:var(--c2s)}
+.box.b3.open{border-color:var(--c3);background:var(--c3s)}
+.box.closing{border-color:var(--c4)!important;background:var(--c4s)!important}
+
+/* troubleshooter */
+.errs{display:flex;flex-wrap:wrap;gap:8px}
+.errs button{font-family:var(--f-mono);font-size:.78rem;text-align:left}
+.fix ol{margin:6px 0 0;padding-left:1.3em;display:grid;gap:4px}
+
+details.setup{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:12px 16px}
+details.setup summary{cursor:pointer;font-weight:700}
+details.setup[open] summary{margin-bottom:10px}
+
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+table.cmp{border-collapse:collapse;width:100%;min-width:640px;font-size:.92rem}
+table.cmp th,table.cmp td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+table.cmp th{font-family:var(--f-display);background:var(--sunk)}
+table.cmp tr:last-child td{border-bottom:none}
+
+.gotcha{border:2px solid var(--c4);border-radius:14px;padding:20px;background:var(--surface);display:grid;gap:14px}
+.vs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.vs>div{min-width:0}
+@media (max-width:720px){.vs{grid-template-columns:minmax(0,1fr)}}
+.vs .tag{font-family:var(--f-mono);font-size:.74rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px}
+.traps{display:grid;gap:10px;margin:0;padding-left:1.2em}
+
+details.q{border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:12px 16px}
+details.q summary{cursor:pointer;font-weight:700}
+details.q[open] summary{margin-bottom:8px}
+details.q p{color:var(--muted)}
+.next{display:flex;justify-content:flex-end;padding-top:30px}
+.next a{font-family:var(--f-display);font-size:1.2rem;font-weight:700;text-decoration:none;border:2px solid var(--ink);color:var(--ink);padding:12px 18px;border-radius:12px}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+
+/* long code lines and tab rows scroll inside their own box instead of widening the whole page */
+section>*,.stack>*{min-width:0}
+section,.stack,.bench{grid-template-columns:minmax(0,1fr)}
+</style>
+
+<div class="wrap">
+
+<header class="hero">
+  <div class="series"><span class="here">1 · JDBC fundamentals</span><a href="spring-jdbc.html" id="series-next">2 · Spring JDBC →</a></div>
+  <span class="eyebrow">Coder Army notes · interactive version</span>
+  <h1>How a Java program <em>talks</em> to MySQL</h1>
+  <p class="lead prose">Java and MySQL are two separate programs. JDBC is the standard way Java opens a line to the database, sends SQL, and reads the answer back. This page turns the 50-page notes into maps, animations and small labs you can poke at.</p>
+  <div class="strip">
+    <div><b>Connect</b><span>Open a session with MySQL using a URL, username and password.</span></div>
+    <div><b>Send SQL</b><span>Use a PreparedStatement with <code>?</code> blanks for the values.</span></div>
+    <div><b>Read &amp; clean up</b><span>Walk the rows one by one, turn them into objects, then close everything.</span></div>
+  </div>
+  <ul class="toc">
+    <li><a href="#big"><span class="lvl">MAP</span>Big picture</a></li>
+    <li><a href="#analogy"><span class="lvl">BASIC</span>The phone-call analogy</a></li>
+    <li><a href="#journey"><span class="lvl">BASIC</span>Journey of one query</a></li>
+    <li><a href="#pieces"><span class="lvl">BASIC</span>The pieces &amp; connecting</a></li>
+    <li><a href="#run"><span class="lvl">CORE</span>Running SQL</a></li>
+    <li><a href="#rs"><span class="lvl">CORE</span>Reading rows</a></li>
+    <li><a href="#ps"><span class="lvl">CORE</span>PreparedStatement</a></li>
+    <li><a href="#crud"><span class="lvl">CORE</span>CRUD</a></li>
+    <li><a href="#close"><span class="lvl">CORE</span>Closing</a></li>
+    <li><a href="#fix"><span class="lvl">ADV</span>Fixing setup errors</a></li>
+    <li><a href="#gotcha"><span class="lvl">!</span>The gotcha</a></li>
+    <li><a href="#quiz"><span class="lvl">TEST</span>Quiz</a></li>
+  </ul>
+</header>
+
+<!-- BIG PICTURE -->
+<section id="big">
+  <span class="eyebrow">Big picture</span>
+  <h2>The whole topic on one map</h2>
+  <p class="prose">Tap a bubble to read what it means in plain words. Tap it again to fold that branch. Come back to this map after each section and see how much you can explain without tapping.</p>
+  <div class="bench"><div class="mm" id="mm-big"></div></div>
+</section>
+
+<!-- ANALOGY -->
+<section id="analogy">
+  <span class="eyebrow">The analogy</span>
+  <h2>Phoning a shop in another country</h2>
+  <div class="prose stack">
+    <p>You want stock information from a shop abroad. You can't just shout across the border. You need a phone, and someone who speaks the shop's language.</p>
+    <p>Every phone has the same buttons, so you already know how to use any of them. The translator plugged into the line converts your words into the shop's language and their answers back into yours.</p>
+    <p>You dial the number, wait for them to pick up, and then make requests. You can say a fixed sentence, or better, fill in a <em>form with blanks</em> so nobody misreads your values. They read the answer back one line at a time. When you're done, you hang up. If you forget to hang up, the line stays busy for everyone else.</p>
+  </div>
+  <dl class="map prose">
+    <dt>You</dt><dd>your Java program</dd>
+    <dt>The shop abroad</dt><dd>the <strong>MySQL server</strong>, a separate program, maybe on another computer</dd>
+    <dt>The standard phone buttons</dt><dd>the <strong>JDBC API</strong>: <code>Connection</code>, <code>PreparedStatement</code>, <code>ResultSet</code> in <code>java.sql</code></dd>
+    <dt>The translator on the line</dt><dd>the <strong>JDBC driver</strong> (for MySQL: Connector/J)</dd>
+    <dt>The phone number</dt><dd>the <strong>JDBC URL</strong> <code>jdbc:mysql://localhost:3306/student_db</code></dd>
+    <dt>An open call</dt><dd>a <strong>Connection</strong></dd>
+    <dt>A form with blanks</dt><dd>a <strong>PreparedStatement</strong> with <code>?</code> placeholders</dd>
+    <dt>Answers read back line by line</dt><dd>a <strong>ResultSet</strong> and its cursor</dd>
+    <dt>Hanging up</dt><dd><code>close()</code>, done for you by try-with-resources</dd>
+  </dl>
+</section>
+
+<!-- JOURNEY -->
+<section id="journey">
+  <span class="eyebrow">Basics · how Java reaches MySQL</span>
+  <h2>Follow one query there and back</h2>
+  <p class="prose">Writing <code>String sql = "SELECT ..."</code> only puts text in Java's memory. MySQL hasn't heard anything yet. Step through what happens when you actually run it.</p>
+  <div class="bench" id="jr">
+    <div class="lane" id="jr-lane"></div>
+    <div class="jr-two">
+      <div>
+        <div class="jr-code-h">The whole method, with the hidden work in grey</div>
+        <div class="pc" id="jr-code" aria-label="The Java method and what happens behind each line"></div>
+        <div class="jr-key">Grey <i>↳</i> rows are not code you write. They show what the driver, the network and MySQL do while one line runs. The connection on the <code>try</code> line was dialled earlier.</div>
+      </div>
+      <div class="stack" style="min-width:0">
+        <div class="pkt" id="jr-pkt"></div>
+        <div class="narr" id="jr-msg"></div>
+      </div>
+    </div>
+  </div>
+  <div class="mer prose" style="max-width:none">
+<pre class="mermaid">
+flowchart LR
+  A["Your Java code"] --> B["JDBC API<br/>standard interfaces"]
+  B --> C["MySQL driver<br/>Connector/J"]
+  C --> D["Network<br/>port 3306"]
+  D --> E["MySQL Server"]
+  E -- "rows / count / error" --> C
+  C -- "ResultSet or a number" --> A
+</pre>
+    <div class="cap">Same trip as a flow diagram. The driver is the only part that knows MySQL's language.</div>
+  </div>
+</section>
+
+<!-- PIECES -->
+<section id="pieces">
+  <span class="eyebrow">Basics · the pieces and connecting</span>
+  <h2>Four things people mix up</h2>
+  <div class="cards">
+    <div class="card"><span class="what">THE SHOP</span><b>MySQL Server</b><p>Stores the data and runs your SQL. It must be installed and running before anything can connect.</p></div>
+    <div class="card"><span class="what">A WINDOW INTO THE SHOP</span><b>DBeaver</b><p>A desktop app for looking at tables and running SQL by hand. Installing it does not install MySQL.</p></div>
+    <div class="card"><span class="what">THE TRANSLATOR</span><b>MySQL Connector/J</b><p>A Java library (a Maven dependency) that speaks MySQL's network language for your program.</p></div>
+    <div class="card"><span class="what">THE PHONE BUTTONS</span><b>JDBC API</b><p>Interfaces built into Java (<code>java.sql</code>). Your code uses these and never touches MySQL-specific classes.</p></div>
+  </div>
+  <div class="mer prose" style="max-width:none">
+<pre class="mermaid">
+mindmap
+  root((JDBC API))
+    You program against it
+      Connection
+      PreparedStatement
+      ResultSet
+    Drivers implement it
+      MySQL - Connector/J
+      PostgreSQL driver
+      Oracle driver
+      H2 driver
+    Same code shape
+      Only URL and driver change
+</pre>
+    <div class="cap">Switch databases and your JDBC code mostly stays the same. The SQL itself may still differ between databases.</div>
+  </div>
+
+  <h3>Decode the phone number</h3>
+  <div class="bench">
+    <div class="url" id="url"></div>
+    <div class="narr" id="url-msg"></div>
+  </div>
+
+  <h3>Make the call</h3>
+<pre class="code"><code class="language-java">import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+
+public class Main {
+    private static final String URL = "jdbc:mysql://localhost:3306/student_db"; // the phone number
+    private static final String USERNAME = "root";
+    private static final String PASSWORD = "your_password";  // real apps: never commit this
+
+    public static void main(String[] args) {
+        // DriverManager reads "jdbc:mysql:", finds the MySQL translator, dials, logs in
+        try (Connection connection = DriverManager.getConnection(URL, USERNAME, PASSWORD)) {
+            System.out.println("Database connected successfully");
+        } catch (SQLException e) {                      // the call failed
+            System.out.println("Message: " + e.getMessage());
+            System.out.println("SQL state: " + e.getSQLState());
+            System.out.println("Error code: " + e.getErrorCode());
+        }                                               // try-with-resources hangs up for you
+    }
+}</code></pre>
+  <dl class="map prose">
+    <dt>Class.forName(...)?</dt><dd>Not needed any more. Since JDBC 4.0 the driver registers itself when its JAR is on the classpath.</dd>
+    <dt>Opening a connection</dt><dd>Is slow-ish: network + login. Much more expensive than <code>new Student()</code>. (This is why chapter 2 adds a connection pool.)</dd>
+    <dt>application.properties?</dt><dd>Plain <code>DriverManager</code> doesn't read it. That's a Spring Boot thing.</dd>
+  </dl>
+
+  <details class="setup">
+    <summary>Setup checklist (install MySQL, DBeaver, project) · open when you need it</summary>
+    <div class="stack">
+      <div class="two">
+        <div class="stack" style="min-width:0">
+          <h3>Windows (your machine)</h3>
+          <ol class="prose" style="margin:0;padding-left:1.2em">
+            <li>Download the MySQL Community Server MSI and run it as administrator.</li>
+            <li>In MySQL Configurator: standalone server, keep port <b>3306</b>, set and save the root password.</li>
+            <li>Install it as a Windows service and keep "Start at system startup" ticked.</li>
+            <li>To start or stop it: <kbd>Win</kbd>+<kbd>R</kbd>, type <code>services.msc</code>, find <code>MySQL84</code> (or similar).</li>
+          </ol>
+<pre class="code"><code class="language-powershell">sc query type= service state= all | findstr /I mysql   # find the exact service name
+net start MySQL84                                      # start it (admin prompt)
+Get-Service *mysql*                                    # PowerShell alternative
+mysql -u root -p                                       # log in to test</code></pre>
+        </div>
+        <div class="stack" style="min-width:0">
+          <h3>macOS</h3>
+<pre class="code"><code class="language-bash">brew install mysql
+brew services start mysql
+mysql_secure_installation
+mysql -u root -p
+# official installer instead: sudo /usr/local/mysql/support-files/mysql.server start</code></pre>
+          <p class="note">Pick one install method. Two MySQL installs fight over ports.</p>
+        </div>
+      </div>
+      <h3>Check it works, then create the table</h3>
+<pre class="code"><code class="language-sql">SELECT VERSION();
+SHOW DATABASES;
+
+CREATE DATABASE student_db;
+USE student_db;
+CREATE TABLE students (
+    id    BIGINT PRIMARY KEY AUTO_INCREMENT,
+    name  VARCHAR(100) NOT NULL,
+    email VARCHAR(150) NOT NULL UNIQUE,
+    age   INT
+);
+DESCRIBE students;</code></pre>
+      <h3>DBeaver connection</h3>
+      <p class="note">New Database Connection → MySQL → Host <code>localhost</code>, Port <code>3306</code>, Database <code>student_db</code>, Username <code>root</code>, your password → let it download the driver → Test Connection → Finish.</p>
+      <h3>Maven project (plain Java, no Spring needed)</h3>
+<pre class="code"><code class="language-markup">&lt;dependency&gt;
+    &lt;groupId&gt;com.mysql&lt;/groupId&gt;
+    &lt;artifactId&gt;mysql-connector-j&lt;/artifactId&gt;
+    &lt;version&gt;9.7.0&lt;/version&gt;   &lt;!-- use the current stable version --&gt;
+    &lt;scope&gt;runtime&lt;/scope&gt;
+&lt;/dependency&gt;</code></pre>
+      <p class="note">Folders: <code>com.coderarmy.jdbc</code> → <code>Main.java</code>, <code>model/Student.java</code> (id, name, email, age with getters/setters and constructors), <code>repository/StudentRepository.java</code>.</p>
+    </div>
+  </details>
+</section>
+
+<!-- RUN SQL -->
+<section id="run">
+  <span class="eyebrow">Core · running SQL</span>
+  <h2>One call, many requests</h2>
+  <div class="prose stack">
+    <p>A <code>Connection</code> is the open call. It isn't one SQL command. To say something, you create a statement from it: <code>connection.createStatement()</code> or, better, <code>connection.prepareStatement(sql)</code>.</p>
+    <p>Then you pick how to send it, based on what you expect back.</p>
+  </div>
+  <div class="mer prose" style="max-width:none">
+<pre class="mermaid">
+flowchart TD
+  Q{"What will the SQL give back?"}
+  Q -- "Rows to read<br/>SELECT" --> A["executeQuery()<br/>returns a ResultSet"]
+  Q -- "A count of changed rows<br/>INSERT · UPDATE · DELETE" --> B["executeUpdate()<br/>returns an int"]
+  Q -- "Don't know in advance<br/>user-typed SQL, stored procedure" --> C["execute()<br/>returns a boolean"]
+  C -- "true" --> D["first result is a ResultSet<br/>getResultSet()"]
+  C -- "false" --> E["it's a count or nothing<br/>getUpdateCount()"]
+</pre>
+    <div class="cap">Decision map. <code>execute()</code>'s boolean tells you the <em>type</em> of the first result. It does not mean success or failure.</div>
+  </div>
+  <h3>Practice: pick the method</h3>
+  <div class="bench">
+    <div class="game" id="game"></div>
+    <div class="toolbar"><span class="score" id="game-score"></span><button class="btn sm" id="game-reset" type="button">Try again</button></div>
+  </div>
+  <dl class="map prose">
+    <dt>executeUpdate() result</dt><dd><code>1</code> = one row inserted/changed · <code>0</code> = nothing matched · more = many rows. <code>CREATE TABLE</code> usually returns 0.</dd>
+    <dt>Name is misleading</dt><dd><code>executeUpdate()</code> runs INSERT and DELETE too, not just UPDATE.</dd>
+  </dl>
+</section>
+
+<!-- RESULTSET -->
+<section id="rs">
+  <span class="eyebrow">Core · reading rows</span>
+  <h2>The ResultSet is a finger moving down a list</h2>
+  <div class="prose stack">
+    <p>A <code>ResultSet</code> is not a <code>List&lt;Student&gt;</code>. It's the shop reading rows back to you with a finger (the <strong>cursor</strong>) on the current line. The finger starts <em>above</em> the first row. <code>next()</code> moves it down one row and says whether there was a row there.</p>
+    <p>JDBC has no idea a row should become a <code>Student</code>. You read each column and build the object yourself. Watch the third row: its age is empty (NULL).</p>
+  </div>
+  <div class="bench" id="rsb">
+    <div class="two">
+      <div class="stack" style="min-width:0">
+        <div style="overflow-x:auto"><table class="rs" id="rs-table"></table></div>
+        <div><span class="eyebrow">List&lt;Student&gt; students</span><div class="objs" id="rs-objs"></div></div>
+      </div>
+      <div class="stack" style="min-width:0">
+        <div class="pc" id="rs-code"></div>
+        <div class="toolbar"><label class="note" for="rs-mode">Read age with</label>
+          <select id="rs-mode"><option value="obj">getObject("age", Integer.class)</option><option value="int">getInt("age")</option></select></div>
+      </div>
+    </div>
+    <div class="narr" id="rs-msg"></div>
+  </div>
+  <div class="mer prose" style="max-width:none">
+<pre class="mermaid">
+mindmap
+  root((Reading a ResultSet))
+    Cursor
+      Starts before row 1
+      next moves down
+      true means a row is there
+      false means finished
+    Loops
+      One row expected - if next
+      Many rows - while next
+    Read columns
+      By name - getString name
+      By position - starts at 1
+      Names are clearer
+    Empty values
+      getInt gives 0 for NULL
+      getObject with Integer gives null
+    Good habits
+      List columns, avoid SELECT star
+      One mapRow method
+</pre>
+  </div>
+</section>
+
+<!-- PREPARED STATEMENT -->
+<section id="ps">
+  <span class="eyebrow">Core · PreparedStatement</span>
+  <h2>Fill in a form, don't glue strings</h2>
+  <div class="prose stack">
+    <p>Gluing user input into SQL is like letting a caller dictate your sentence word for word. If their "name" contains a quote mark, they can end your sentence early and add their own commands. That's <strong>SQL injection</strong>.</p>
+    <p>A <code>PreparedStatement</code> sends the sentence with blanks (<code>?</code>) and the values separately. A value can never become SQL code, however strange it looks. Type into the box, or try the presets.</p>
+  </div>
+  <div class="bench">
+    <div class="toolbar">
+      <label for="inj-in" class="note">Name typed by the user</label>
+      <input type="text" id="inj-in" value="Rahul" style="flex:1;min-width:200px">
+    </div>
+    <div class="toolbar">
+      <button class="btn sm" type="button" data-inj="Rahul">Rahul</button>
+      <button class="btn sm" type="button" data-inj="O'Brien">O'Brien</button>
+      <button class="btn sm" type="button" data-inj="x', 'x@x.com', 1); DROP TABLE students; -- ">Attack: DROP TABLE</button>
+    </div>
+    <div class="toolbar">
+      <button class="btn on" type="button" id="inj-glue">String gluing</button>
+      <button class="btn" type="button" id="inj-prep">PreparedStatement</button>
+    </div>
+    <div class="sql" id="inj-sql"></div>
+    <div class="narr" id="inj-msg"></div>
+    <p class="note"><span class="sql" style="display:inline;padding:1px 6px"><span class="u">green</span></span> = user text treated as data · <span class="sql" style="display:inline;padding:1px 6px"><span class="x">red</span></span> = user text that MySQL would run as SQL</p>
+  </div>
+<pre class="code"><code class="language-java">String sql = "INSERT INTO students(name, email, age) VALUES (?, ?, ?)"; // the form
+
+PreparedStatement ps = connection.prepareStatement(sql);
+ps.setString(1, student.getName());   // blank #1 (numbering starts at 1, not 0)
+ps.setString(2, student.getEmail());  // blank #2
+ps.setObject(3, student.getAge());    // blank #3 · setObject handles a null age for you
+int rowsAffected = ps.executeUpdate();</code></pre>
+  <dl class="map prose">
+    <dt>Gluing also breaks</dt><dd>Names with apostrophes, NULL values, dates and number formatting. <code>.formatted()</code> or text blocks don't fix it. It's still gluing.</dd>
+    <dt>Setters</dt><dd><code>setString</code>, <code>setInt</code>, <code>setLong</code>, <code>setDouble</code>, <code>setBoolean</code>, <code>setBigDecimal</code>, <code>setDate</code>, <code>setTimestamp</code>, <code>setObject</code>, <code>setNull</code>.</dd>
+    <dt>The limit</dt><dd><code>?</code> can only stand for a <em>value</em>. It can't be a column name, table name or ASC/DESC. See the gotcha below.</dd>
+  </dl>
+</section>
+
+<!-- CRUD -->
+<section id="crud">
+  <span class="eyebrow">Core · CRUD</span>
+  <h2>Five operations, one repeating shell</h2>
+  <p class="prose">Every repository method has the same outer shell: open a connection, prepare the statement, catch <code>SQLException</code>, close everything. Only the middle changes. Notice how much repeats. That repetition is exactly what chapter 2 (Spring JDBC) removes.</p>
+  <div class="mer prose" style="max-width:none">
+<pre class="mermaid">
+mindmap
+  root((Student CRUD))
+    Create
+      INSERT with 3 blanks
+      executeUpdate gives 1
+      Want the new id? RETURN_GENERATED_KEYS
+    Read one
+      WHERE id = ?
+      if next then map row
+      Optional - empty means not found
+    Read all
+      while next, add to list
+      Empty list when no rows
+    Update
+      SET 3 values WHERE id
+      4 blanks, order matters
+      1 updated, 0 not found
+    Delete
+      WHERE id = ?
+      1 deleted, 0 not found
+</pre>
+  </div>
+  <div class="stack">
+    <div class="tabs" role="tablist" id="crud-tabs">
+      <button class="tab" role="tab" aria-selected="true" data-tab="shell" type="button">The shell</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="create" type="button">Create</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="id" type="button">Create + get id</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="one" type="button">Read one</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="all" type="button">Read all</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="upd" type="button">Update</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="del" type="button">Delete</button>
+    </div>
+<div data-panel="shell">
+<pre class="code"><code class="language-java">// Every CRUD method in raw JDBC looks like this. Only the middle part changes.
+public RESULT someOperation(...) {
+    String sql = "...";                                       // 1. the SQL with ? blanks
+    try (
+        Connection connection = DriverManager.getConnection(URL, USERNAME, PASSWORD); // dial
+        PreparedStatement ps = connection.prepareStatement(sql)                       // the form
+    ) {
+        // 2. fill the blanks:  ps.setString(1, ...); ...
+        // 3. send it:          ps.executeUpdate()  or  ps.executeQuery()
+        // 4. use the answer:   a count, or rows → objects
+    } catch (SQLException e) {
+        throw new RuntimeException("Failed to ...", e);       // don't swallow errors
+    }                                                         // auto hang-up
+}</code></pre>
+</div>
+<div data-panel="create" hidden>
+<pre class="code"><code class="language-java">public int save(Student student) {
+    String sql = "INSERT INTO students(name, email, age) VALUES (?, ?, ?)";
+    try (Connection connection = DriverManager.getConnection(URL, USERNAME, PASSWORD);
+         PreparedStatement ps = connection.prepareStatement(sql)) {
+        ps.setString(1, student.getName());
+        ps.setString(2, student.getEmail());
+        ps.setObject(3, student.getAge());
+        return ps.executeUpdate();                 // 1 = saved
+    } catch (SQLException e) {
+        throw new RuntimeException("Failed to save student", e);
+    }
+}
+
+// usage
+if (repository.save(new Student("Rahul", "rahul@gmail.com", 24)) == 1) {
+    System.out.println("Student saved successfully");
+}</code></pre>
+</div>
+<div data-panel="id" hidden>
+<pre class="code"><code class="language-java">public long saveAndReturnId(Student student) {
+    String sql = "INSERT INTO students(name, email, age) VALUES (?, ?, ?)";
+    try (Connection connection = DriverManager.getConnection(URL, USERNAME, PASSWORD);
+         PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) { // "tell me the new id"
+        ps.setString(1, student.getName());
+        ps.setString(2, student.getEmail());
+        ps.setObject(3, student.getAge());
+        if (ps.executeUpdate() != 1) throw new RuntimeException("Student was not inserted");
+
+        try (ResultSet keys = ps.getGeneratedKeys()) {   // a tiny ResultSet holding the new id
+            if (keys.next()) return keys.getLong(1);
+        }
+        throw new RuntimeException("Generated ID was not returned");
+    } catch (SQLException e) {
+        throw new RuntimeException("Failed to save student", e);
+    }
+}</code></pre>
+</div>
+<div data-panel="one" hidden>
+<pre class="code"><code class="language-java">public Optional&lt;Student&gt; findById(Long id) {
+    String sql = "SELECT id, name, email, age FROM students WHERE id = ?";
+    try (Connection connection = DriverManager.getConnection(URL, USERNAME, PASSWORD);
+         PreparedStatement ps = connection.prepareStatement(sql)) {
+        ps.setLong(1, id);
+        try (ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) return Optional.of(mapRow(rs));   // found it
+            return Optional.empty();                          // normal "not found"
+        }
+    } catch (SQLException e) {
+        // a broken database is NOT "not found", so don't return Optional.empty() here
+        throw new RuntimeException("Failed to fetch student with ID " + id, e);
+    }
+}
+
+private Student mapRow(ResultSet rs) throws SQLException {    // one row → one Student
+    return new Student(rs.getLong("id"), rs.getString("name"),
+                       rs.getString("email"), rs.getObject("age", Integer.class));
+}
+
+// usage
+repository.findById(1L).ifPresentOrElse(System.out::println,
+        () -> System.out.println("Student not found"));</code></pre>
+</div>
+<div data-panel="all" hidden>
+<pre class="code"><code class="language-java">public List&lt;Student&gt; findAll() {
+    String sql = "SELECT id, name, email, age FROM students";
+    List&lt;Student&gt; students = new ArrayList&lt;&gt;();
+    try (Connection connection = DriverManager.getConnection(URL, USERNAME, PASSWORD);
+         PreparedStatement ps = connection.prepareStatement(sql);
+         ResultSet rs = ps.executeQuery()) {
+        while (rs.next()) {              // finger moves down until false
+            students.add(mapRow(rs));    // read columns → Student → add
+        }
+        return students;                 // empty list if the table is empty
+    } catch (SQLException e) {
+        throw new RuntimeException("Failed to fetch students", e);
+    }
+}</code></pre>
+</div>
+<div data-panel="upd" hidden>
+<pre class="code"><code class="language-java">public int update(Long id, Student student) {
+    String sql = "UPDATE students SET name = ?, email = ?, age = ? WHERE id = ?";
+    try (Connection connection = DriverManager.getConnection(URL, USERNAME, PASSWORD);
+         PreparedStatement ps = connection.prepareStatement(sql)) {
+        ps.setString(1, student.getName());   // 1st ? → name
+        ps.setString(2, student.getEmail());  // 2nd ? → email
+        ps.setObject(3, student.getAge());    // 3rd ? → age
+        ps.setLong(4, id);                    // 4th ? → id (the WHERE)
+        return ps.executeUpdate();            // 1 = updated, 0 = no such student
+    } catch (SQLException e) {
+        throw new RuntimeException("Failed to update student with ID " + id, e);
+    }
+}
+// Just run the UPDATE and check the count. Don't call findById() first:
+// that's an extra trip, and the row can change between the two calls.</code></pre>
+</div>
+<div data-panel="del" hidden>
+<pre class="code"><code class="language-java">public int deleteById(Long id) {
+    String sql = "DELETE FROM students WHERE id = ?";
+    try (Connection connection = DriverManager.getConnection(URL, USERNAME, PASSWORD);
+         PreparedStatement ps = connection.prepareStatement(sql)) {
+        ps.setLong(1, id);
+        return ps.executeUpdate();            // 1 = deleted, 0 = nothing matched
+    } catch (SQLException e) {
+        throw new RuntimeException("Failed to delete student with ID " + id, e);
+    }
+}</code></pre>
+</div>
+  </div>
+  <h3>Why not check first, then update?</h3>
+  <div class="two">
+    <div class="mer" style="min-width:0">
+<pre class="mermaid">
+flowchart TD
+  A["findById(1)"] --> B["Student exists"]
+  B --> C["...another user deletes it..."]
+  C --> D["UPDATE ... WHERE id = 1"]
+  D --> E["0 rows. Your check was already stale"]
+</pre>
+      <div class="cap">Two trips: slower, and the answer can change in between (a race condition).</div>
+    </div>
+    <div class="mer" style="min-width:0">
+<pre class="mermaid">
+flowchart TD
+  A["UPDATE ... WHERE id = 1"] --> B{"rows affected?"}
+  B -- "1" --> C["Updated"]
+  B -- "0" --> D["Not found"]
+</pre>
+      <div class="cap">One trip. The count is the answer. Only add an extra query when you truly need more detail. (Note: MySQL settings like <code>useAffectedRows</code> change whether "0" means "not matched" or "nothing changed".)</div>
+    </div>
+  </div>
+</section>
+
+<!-- CLOSE -->
+<section id="close">
+  <span class="eyebrow">Core · closing resources</span>
+  <h2>Hang up in reverse order</h2>
+  <div class="prose stack">
+    <p>The three objects live inside each other, like nesting boxes. The connection creates the statement, and the statement creates the result set. You close the inner box first, then work outwards.</p>
+    <p>try-with-resources does this for you, in reverse order of how you declared them. Step through it.</p>
+  </div>
+  <div class="bench" id="cl">
+    <div class="two">
+      <div class="nest" id="cl-boxes" style="min-width:0"></div>
+      <div class="pc" id="cl-code" style="min-width:0"></div>
+    </div>
+    <div class="narr" id="cl-msg"></div>
+  </div>
+  <dl class="map prose">
+    <dt>Forget to close?</dt><dd>Leaked connections, too many open sessions, "Too many connections" errors, slowdown, transactions left open.</dd>
+    <dt>Old way</dt><dd>A <code>finally</code> block with three null checks and three nested try/catch. Works, but long and easy to get wrong.</dd>
+    <dt>Here vs later</dt><dd>In this plain project <code>close()</code> really ends the connection. With a connection pool (chapter 2), <code>close()</code> hands it back to the pool instead.</dd>
+  </dl>
+</section>
+
+<!-- FIX -->
+<section id="fix">
+  <span class="eyebrow">Advanced · when it doesn't connect</span>
+  <h2>Pick the error you're seeing</h2>
+  <div class="bench">
+    <div class="errs" id="errs"></div>
+    <div class="narr fix" id="err-out"></div>
+  </div>
+</section>
+
+<!-- COMPARE -->
+<section id="compare">
+  <span class="eyebrow">Things people mix up</span>
+  <h2>Side by side</h2>
+  <div class="tbl-wrap">
+    <table class="cmp">
+      <thead><tr><th>Pair</th><th>First one</th><th>Second one</th><th>Rule of thumb</th></tr></thead>
+      <tbody>
+        <tr><td><b>Statement vs PreparedStatement</b></td><td>Fixed SQL text, values glued in</td><td>SQL with <code>?</code> blanks, values sent separately</td><td>Always PreparedStatement when any value comes from outside</td></tr>
+        <tr><td><b>executeQuery vs executeUpdate</b></td><td>For SELECT. Gives rows (ResultSet)</td><td>For INSERT / UPDATE / DELETE. Gives a count</td><td>Rows back → Query. Count back → Update</td></tr>
+        <tr><td><b>execute()</b></td><td>true → first result is rows</td><td>false → a count or nothing</td><td>The boolean is about the result type, never success</td></tr>
+        <tr><td><b>getInt vs getObject(…, Integer.class)</b></td><td>Empty (NULL) becomes 0</td><td>Empty (NULL) becomes null</td><td>Use getObject for columns that can be empty</td></tr>
+        <tr><td><b>By name vs by position</b></td><td><code>getString("name")</code></td><td><code>getString(2)</code>, counting from 1</td><td>Names are clearer and survive column reordering</td></tr>
+        <tr><td><b>Optional.empty() vs exception</b></td><td>"No such student" (normal)</td><td>"Database is broken" (a real failure)</td><td>Never turn a failure into "not found"</td></tr>
+        <tr><td><b>MySQL vs DBeaver vs Connector/J</b></td><td>The server that stores data</td><td>A viewer app / a Java library</td><td>Server must run before either can connect</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- GOTCHA -->
+<section id="gotcha">
+  <div class="gotcha">
+    <span class="eyebrow" style="color:var(--c4)">The one gotcha worth remembering</span>
+    <h2><code>?</code> protects values, not names</h2>
+    <p class="prose">Wrong belief: "I use PreparedStatement, so I'm safe from injection everywhere." Placeholders only work for <em>values</em>. If a user picks the sort column and you glue it in, they control your SQL again.</p>
+    <div class="vs">
+      <div><div class="tag bad">✗ Unsafe</div>
+<pre class="code"><code class="language-java">// sortColumn comes from the request
+String sql = "SELECT id, name, email, age FROM students ORDER BY "
+           + sortColumn;   // user can inject anything here
+// and this does NOT work either:
+// "... ORDER BY ?"  → ? can't stand for a column name</code></pre></div>
+      <div><div class="tag ok">✓ Safe</div>
+<pre class="code"><code class="language-java">Set&lt;String&gt; allowed = Set.of("id", "name", "age");
+if (!allowed.contains(sortColumn)) {
+    throw new IllegalArgumentException("Bad sort column");
+}
+String sql = "SELECT id, name, email, age FROM students ORDER BY "
+           + sortColumn;   // only known-good words reach SQL</code></pre></div>
+    </div>
+    <p class="prose"><b>Rule:</b> placeholders for values, an allow-list for anything structural (column, table, ASC/DESC).</p>
+    <h3>Smaller traps</h3>
+    <ol class="traps prose">
+      <li><b>Forgetting <code>next()</code>.</b> The cursor starts above the first row. Reading before calling <code>next()</code> throws an error.</li>
+      <li><b>Counting blanks from 0.</b> <code>setString(0, …)</code> fails. JDBC numbers start at 1.</li>
+      <li><b>Reading <code>execute()</code>'s <code>false</code> as "failed".</b> It just means the first result is a count, not rows.</li>
+      <li><b><code>getInt</code> on an empty column.</b> You silently get 0, a fake value. Use <code>getObject("age", Integer.class)</code>.</li>
+      <li><b>Passwords in code.</b> Fine for learning. In real projects use environment variables or a secrets store, and keep them out of Git.</li>
+    </ol>
+  </div>
+</section>
+
+<!-- QUIZ -->
+<section id="quiz">
+  <span class="eyebrow">Test yourself · answer out loud before opening</span>
+  <h2>Recall check</h2>
+  <div class="stack prose">
+    <details class="q"><summary>1. Why can't Java just call MySQL like a normal method?</summary><p>They're separate programs, possibly on different computers. Java needs a connection over the network and a driver that speaks MySQL's protocol. A SQL string in Java is only text until it's sent.</p></details>
+    <details class="q"><summary>2. What's the difference between the JDBC API and the JDBC driver?</summary><p>The API is the standard set of interfaces your code uses (Connection, PreparedStatement, ResultSet). The driver is the database-specific implementation behind them (Connector/J for MySQL).</p></details>
+    <details class="q"><summary>3. Which method for SELECT? For DELETE? What does execute() returning false mean?</summary><p>executeQuery for SELECT, executeUpdate for DELETE. false from execute() means the first result is an update count or nothing. It doesn't mean it failed.</p></details>
+    <details class="q"><summary>4. Predict: a fresh ResultSet has 2 rows. You call next() three times. What does each call return?</summary><p>true, true, false. The cursor starts above row 1, moves to row 1, then row 2, then finds nothing.</p></details>
+    <details class="q"><summary>5. The age column is NULL. What does getInt("age") give, and what should you use?</summary><p>0. Use getObject("age", Integer.class), which gives null (or check wasNull()).</p></details>
+    <details class="q"><summary>6. Name three problems with gluing values into SQL strings.</summary><p>SQL injection, broken quotes (O'Brien), NULL handling, number/date formatting, poor readability.</p></details>
+    <details class="q"><summary>7. update() returned 0. Is that an error?</summary><p>No. No row matched the WHERE. Report "not found". A real database error would throw SQLException instead.</p></details>
+    <details class="q"><summary>8. In what order are resources closed, and who does it?</summary><p>ResultSet, then PreparedStatement, then Connection: reverse of creation. try-with-resources does it automatically in reverse declaration order.</p></details>
+  </div>
+  <div class="next"><a href="spring-jdbc.html" id="next-link">Next: Spring JDBC →</a></div>
+</section>
+
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const BR = ['var(--c1)','var(--c2)','var(--c3)','var(--c4)','var(--c5)','var(--c6)'];
+
+/* ---------- reusable: clickable mindmap ---------- */
+function mindmap(el, data, openDepth = 1){
+  el.innerHTML = `<div class="mm-tools"><button class="btn sm" type="button" data-a="open">Expand all</button><button class="btn sm" type="button" data-a="close">Fold to main branches</button></div><div class="mm-tree"></div><div class="mm-detail"></div>`;
+  const tree = el.querySelector('.mm-tree'), det = el.querySelector('.mm-detail');
+  let sel = null;
+  function show(node, path, color, btn){
+    if(sel) sel.classList.remove('sel'); sel = btn; btn.classList.add('sel');
+    det.style.setProperty('--c', color);
+    det.innerHTML = `<span class="path">${esc(path.join('  ›  '))}</span><b>${esc(node.t)}</b>${node.d || ''}`;
+  }
+  function build(node, level, color, path){
+    const w = document.createElement('div');
+    w.className = 'mm-node lv' + Math.min(level, 3);
+    w.style.setProperty('--c', color);
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'mm-label';
+    b.innerHTML = esc(node.t) + (node.c ? `<span class="mm-count">+${node.c.length}</span>` : '');
+    w.append(b);
+    const p = path.concat(node.t);
+    if(node.c){
+      const k = document.createElement('div'); k.className = 'mm-kids';
+      node.c.forEach((ch, i) => k.append(build(ch, level + 1, level === 0 ? BR[i % BR.length] : color, p)));
+      w.append(k);
+      if(level >= openDepth) w.classList.add('closed');
+    }
+    b.onclick = () => {
+      if(node.c && level > 0){
+        if(w.classList.contains('closed')) w.classList.remove('closed');
+        else if(sel === b) w.classList.add('closed');
+      }
+      show(node, p, color, b);
+    };
+    if(level === 0) setTimeout(() => show(node, p, 'var(--ink)', b));
+    return w;
+  }
+  tree.append(build(data, 0, 'var(--ink)', []));
+  el.querySelector('[data-a=open]').onclick = () => tree.querySelectorAll('.mm-node').forEach(n => n.classList.remove('closed'));
+  el.querySelector('[data-a=close]').onclick = () => tree.querySelectorAll('.mm-node.lv1').forEach(n => n.classList.add('closed'));
+}
+
+/* ---------- reusable: stepper ---------- */
+function stepper(root, frames, render, delay = 1600){
+  const bar = document.createElement('div'); bar.className = 'toolbar';
+  bar.innerHTML = `<button class="btn" type="button" data-a="back">◀ Back</button><button class="btn primary" type="button" data-a="next">Next ▶</button><button class="btn" type="button" data-a="play">▶ Play</button><button class="btn" type="button" data-a="reset">↺ Restart</button><span class="score" data-a="n"></span>`;
+  root.prepend(bar);
+  const st = { i:0, t:null, frames };
+  const draw = () => {
+    render(st.frames[st.i], st.i);
+    bar.querySelector('[data-a=n]').textContent = `step ${st.i + 1} / ${st.frames.length}`;
+    bar.querySelector('[data-a=next]').disabled = st.i >= st.frames.length - 1;
+    bar.querySelector('[data-a=back]').disabled = st.i === 0;
+    bar.querySelector('[data-a=play]').textContent = st.t ? '⏸ Pause' : '▶ Play';
+  };
+  const stop = () => { clearTimeout(st.t); st.t = null; };
+  const tick = () => { if(st.i < st.frames.length - 1){ st.i++; st.t = setTimeout(tick, delay); } else stop(); draw(); };
+  bar.onclick = e => {
+    const a = e.target.closest('button')?.dataset.a; if(!a) return;
+    if(a === 'next'){ stop(); st.i = Math.min(st.frames.length - 1, st.i + 1); }
+    if(a === 'back'){ stop(); st.i = Math.max(0, st.i - 1); }
+    if(a === 'reset'){ stop(); st.i = 0; }
+    if(a === 'play'){ if(st.t) stop(); else { if(st.i >= st.frames.length - 1) st.i = 0; st.t = setTimeout(tick, 250); } }
+    draw();
+  };
+  draw();
+  return { reload(f){ stop(); st.frames = f; st.i = Math.min(st.i, f.length - 1); draw(); }, draw };
+}
+
+/* ---------- big mindmap ---------- */
+mindmap($('#mm-big'), {
+  t:'JDBC', d:'Java Database Connectivity: Java\'s standard, built-in way to talk to a relational database such as MySQL.',
+  c:[
+    {t:'Why it\'s needed', d:'Java and MySQL are separate programs. Something must carry SQL across and bring answers back.', c:[
+      {t:'Two separate programs', d:'Your app runs in the JVM. MySQL runs as its own server, on the same machine or far away.'},
+      {t:'SQL in a String is just text', d:'<code>String sql = "SELECT ..."</code> lives in Java memory. MySQL hasn\'t received anything yet.'},
+      {t:'Each database has its own language', d:'MySQL, PostgreSQL and Oracle each use their own network protocol. Java doesn\'t speak them all, so it uses a driver.'}]},
+    {t:'The pieces', d:'Four different things that beginners often blur together.', c:[
+      {t:'JDBC API', d:'The standard interfaces in <code>java.sql</code>: Connection, PreparedStatement, ResultSet, SQLException. Your code uses these.'},
+      {t:'Driver (Connector/J)', d:'The translator. A Maven dependency that implements the JDBC interfaces for MySQL.'},
+      {t:'MySQL Server', d:'Stores the data and runs SQL. Must be running first.'},
+      {t:'DBeaver', d:'A desktop viewer for running SQL by hand. It is not the server.'}]},
+    {t:'Connecting', d:'Dialling the database and logging in.', c:[
+      {t:'The URL', d:'<code>jdbc:mysql://localhost:3306/student_db</code> = prefix, database type, host, port, database name.'},
+      {t:'DriverManager.getConnection', d:'Reads the URL, finds the right driver, connects, logs in, returns a <code>Connection</code>.'},
+      {t:'Connection = open session', d:'Used to create statements, run transactions and close the session. Opening one is slow (network + login).'},
+      {t:'No Class.forName', d:'Since JDBC 4.0 drivers register themselves when their JAR is present.'}]},
+    {t:'Sending SQL', d:'Pick a statement type and a way to send it.', c:[
+      {t:'PreparedStatement', d:'SQL with <code>?</code> blanks; values are sent separately. Safe from injection. Use it by default.'},
+      {t:'executeQuery', d:'For SELECT. Returns a ResultSet (rows).'},
+      {t:'executeUpdate', d:'For INSERT, UPDATE, DELETE (and DDL). Returns how many rows changed.'},
+      {t:'execute', d:'When you don\'t know what comes back. Its boolean says "the first result is rows" (true) or not (false).'}]},
+    {t:'Reading results', d:'Turning the database\'s answer into Java objects, by hand.', c:[
+      {t:'Cursor starts before row 1', d:'Call <code>next()</code> to move to a row. It returns false when rows run out.'},
+      {t:'Read by column name', d:'<code>rs.getString("name")</code>. Clearer than position numbers (which start at 1).'},
+      {t:'NULL trap', d:'<code>getInt</code> turns an empty value into 0. Use <code>getObject("age", Integer.class)</code>.'},
+      {t:'Map rows yourself', d:'JDBC never creates a Student for you. Write one <code>mapRow()</code> and reuse it.'}]},
+    {t:'CRUD', d:'Create, Read, Update, Delete: all built from the same shell.', c:[
+      {t:'Create', d:'INSERT with 3 blanks. Count 1 = saved. <code>RETURN_GENERATED_KEYS</code> gives you the new id.'},
+      {t:'Read', d:'One row: <code>if (rs.next())</code> → Optional. Many rows: <code>while (rs.next())</code> → List.'},
+      {t:'Update & Delete', d:'Count 1 = done, 0 = no such row. Don\'t check with a SELECT first.'}]},
+    {t:'Cleaning up', d:'Hang up properly.', c:[
+      {t:'Reverse order', d:'ResultSet → PreparedStatement → Connection.'},
+      {t:'try-with-resources', d:'Closes them automatically in reverse order, even when an error happens.'},
+      {t:'Leaks hurt', d:'Unclosed connections pile up until MySQL refuses new ones.'}]},
+    {t:'Staying safe', d:'Habits that prevent real bugs.', c:[
+      {t:'SQL injection', d:'Never glue user input into SQL. Use <code>?</code> blanks.'},
+      {t:'Allow-list names', d:'<code>?</code> can\'t be a column or table name. Check those against a fixed list.'},
+      {t:'Secrets out of code', d:'Keep passwords in environment variables or a secrets store, not in Git.'},
+      {t:'List columns', d:'<code>SELECT id, name, email, age</code> instead of <code>SELECT *</code>.'}]}
+  ]
+});
+
+/* ---------- journey ---------- */
+const STOPS = [
+  ['code','Your code','Java app in the JVM'],
+  ['api','JDBC API','the standard phone'],
+  ['drv','Driver','Connector/J, the translator'],
+  ['net','Network','port 3306'],
+  ['db','MySQL','the shop']];
+const JF = [
+  {at:'code', lines:['sql'], pkt:'"SELECT id, name FROM students WHERE id = ?"', msg:'You build a SQL string. It\'s just text in Java\'s memory. MySQL knows nothing yet.', real:'String sql = "..."'},
+  {at:'api', lines:['set','exec'], pkt:'ps.setLong(1, 7); ps.executeQuery()', msg:'You press the standard buttons: create a PreparedStatement, fill the blank, ask to run it.', real:'JDBC method call on a java.sql interface'},
+  {at:'drv', lines:['h1'], pkt:'SQL + value 7 → MySQL protocol bytes', msg:'The translator turns your request into MySQL\'s own network format.', real:'The MySQL JDBC driver builds a protocol packet'},
+  {at:'net', lines:['h2'], pkt:'→ → → bytes travel →', msg:'The request travels over the network connection you opened earlier.', real:'TCP connection to host:3306'},
+  {at:'db', lines:['h3'], pkt:'parse · check · plan · run', msg:'The shop reads your request, checks it, decides the fastest way to answer, then does it.', real:'MySQL parses, validates, creates an execution plan, executes'},
+  {at:'net', lines:['h4'], pkt:'← ← rows travel back ←', msg:'The answer comes back: rows, a count of changed rows, or an error.', real:'Rows + metadata, update count, or error packet'},
+  {at:'drv', lines:['h5'], pkt:'bytes → Java values', msg:'The translator decodes MySQL\'s reply into something Java understands.', real:'Driver decodes the response'},
+  {at:'api', lines:['exec'], pkt:'ResultSet (cursor above row 1)', msg:'You receive a ResultSet: the rows, read with a finger that starts above the first line.', real:'executeQuery() returns ResultSet'},
+  {at:'code', lines:['next','ret'], pkt:'new Student(7, "Priya", ...)', msg:'Your code reads the columns and builds a Student object. Trip complete.', real:'Your mapRow() turns a row into an object'}];
+// [id, text, hidden?]. Hidden rows are work done behind a line, in the order it happens.
+const JCODE = [
+  ['sql',  'String sql = "SELECT id, name FROM students WHERE id = ?";'],
+  ['',     ''],
+  ['c1',   'try (Connection c = DriverManager.getConnection(URL, USER, PASS);'],
+  ['c2',   '     PreparedStatement ps = c.prepareStatement(sql)) {'],
+  ['set',  '    ps.setLong(1, 7);'],
+  ['exec', '    try (ResultSet rs = ps.executeQuery()) {'],
+  ['h1',   '        ↳ driver:  SQL + 7 → MySQL protocol bytes', 1],
+  ['h2',   '        ↳ network: the bytes travel to MySQL (port 3306)', 1],
+  ['h3',   '        ↳ MySQL:   parse · check · plan · run', 1],
+  ['h4',   '        ↳ network: the rows travel back', 1],
+  ['h5',   '        ↳ driver:  bytes → Java values, wrapped as a ResultSet', 1],
+  ['next', '        if (rs.next()) {   // finger moves to row 1'],
+  ['ret',  '            return mapRow(rs);   // one row → one Student'],
+  ['e1',   '        }'],
+  ['e2',   '    }'],
+  ['e3',   '}']];
+$('#jr-code').innerHTML = JCODE.map(([id, t, hid]) => {
+  if(!t) return '<div> </div>';
+  const c = t.indexOf('//');
+  const body = c >= 0 ? esc(t.slice(0, c)) + '<span class="c">' + esc(t.slice(c)) + '</span>' : esc(t);
+  return `<div data-l="${id}"${hid ? ' class="hid"' : ''}>${body}</div>`;
+}).join('');
+const order = STOPS.map(s => s[0]);
+stepper($('#jr'), JF, (f, i) => {
+  const visited = new Set(JF.slice(0, i).map(x => x.at));
+  $('#jr-lane').innerHTML = STOPS.map(([id, t, s]) => `<div class="stop ${f.at === id ? 'on' : visited.has(id) ? 'done' : ''}"><b>${t}</b><small>${s}</small></div>`).join('');
+  document.querySelectorAll('#jr-code div[data-l]').forEach(d => d.classList.toggle('on', f.lines.includes(d.dataset.l)));
+  $('#jr-pkt').textContent = (i >= 5 ? '◀ ' : '▶ ') + f.pkt;
+  $('#jr-msg').innerHTML = f.msg + `<span class="real">Real term: ${esc(f.real)}</span>`;
+}, 1800);
+
+/* ---------- url decoder ---------- */
+const URLP = [
+  ['jdbc:', 'JDBC prefix', 'Tells DriverManager "this is a JDBC address".', 'var(--c1)'],
+  ['mysql:', 'Database type', 'DriverManager uses this to pick the MySQL driver. For PostgreSQL it would be <code>postgresql:</code>.', 'var(--c2)'],
+  ['//localhost', 'Host', 'Which computer runs MySQL. <code>localhost</code> = this same machine.', 'var(--c3)'],
+  [':3306', 'Port', 'Which "door" MySQL listens on. 3306 is MySQL\'s default. PostgreSQL uses 5432.', 'var(--c4)'],
+  ['/student_db', 'Database name', 'Which database inside the server. It must already exist, or you get "Unknown database".', 'var(--c5)']];
+$('#url').innerHTML = URLP.map((p, i) => `<button type="button" data-i="${i}" style="--c:${p[3]}">${p[0]}</button>`).join('');
+function urlShow(i){
+  $('#url').querySelectorAll('button').forEach((b, x) => b.classList.toggle('sel', x === i));
+  const p = URLP[i]; $('#url-msg').innerHTML = `<b>${esc(p[0])}</b> · ${p[1]}<span class="real">${p[2]}</span>`;
+}
+$('#url').onclick = e => { const b = e.target.closest('button'); if(b) urlShow(+b.dataset.i); };
+urlShow(3);
+
+/* ---------- method game ---------- */
+const GQ = [
+  ['SELECT id, name FROM students', 'executeQuery', 'Rows come back, so you get a ResultSet.'],
+  ["INSERT INTO students(name, email, age) VALUES (?, ?, ?)", 'executeUpdate', 'Returns 1 when one row is inserted.'],
+  ['UPDATE students SET age = 25 WHERE id = 99', 'executeUpdate', 'Returns 0 if no student has id 99. That\'s not an error.'],
+  ['DELETE FROM students WHERE id = ?', 'executeUpdate', 'Despite the name, executeUpdate handles DELETE too.'],
+  ['CREATE TABLE logs (id BIGINT)', 'executeUpdate', 'DDL works with executeUpdate and usually returns 0.'],
+  ['Whatever SQL the admin types into a console box', 'execute', 'You can\'t know if it returns rows or a count, so use execute() and check its boolean.'],
+  ['A stored procedure that may return rows or a count', 'execute', 'Mixed or unknown results → execute(), then getResultSet() or getUpdateCount().']];
+function game(){
+  let right = 0, done = 0;
+  $('#game').innerHTML = GQ.map((q, i) => `<div class="qrow" data-i="${i}"><code>${esc(q[0])}</code><div class="opts">${['executeQuery','executeUpdate','execute'].map(m => `<button class="btn sm" type="button" data-m="${m}">${m}()</button>`).join('')}</div><div class="fb" hidden></div></div>`).join('');
+  const score = () => $('#game-score').textContent = done ? `${right} / ${done} right · ${GQ.length - done} left` : `${GQ.length} questions`;
+  $('#game').onclick = e => {
+    const b = e.target.closest('button[data-m]'); if(!b) return;
+    const row = b.closest('.qrow'); if(row.classList.contains('right') || row.classList.contains('wrong')) return;
+    const q = GQ[+row.dataset.i], ok = b.dataset.m === q[1];
+    row.classList.add(ok ? 'right' : 'wrong'); done++; if(ok) right++;
+    const fb = row.querySelector('.fb'); fb.hidden = false;
+    fb.innerHTML = (ok ? '<span class="ok">✓ Right.</span> ' : `<span class="bad">✗ It's ${q[1]}().</span> `) + q[2];
+    score();
+  };
+  score();
+}
+$('#game-reset').onclick = game; game();
+
+/* ---------- resultset stepper ---------- */
+const ROWS = [[1,'Rahul','rahul@gmail.com',24],[2,'Priya','priya@gmail.com',22],[3,'Aman','aman@gmail.com',null]];
+const RS_CODE = [
+  ['w', 'while (rs.next()) {                  // move the finger down'],
+  ['r', '    Student s = new Student('],
+  ['r', '        rs.getLong("id"), rs.getString("name"),'],
+  ['a', '        rs.getString("email"), AGE_READ);'],
+  ['add','    students.add(s);'],
+  ['end','}                                    // next() was false: done']];
+function rsFrames(mode){
+  const f = [{cur:-1, line:null, objs:[], msg:'executeQuery() returned a ResultSet. The finger (cursor) sits <b>above</b> row 1. Nothing has been read yet.'}];
+  const objs = [];
+  ROWS.forEach((r, i) => {
+    f.push({cur:i, line:'w', objs:objs.slice(), msg:`<b>next()</b> → moves to row ${i+1} and returns <b>true</b>. There's a row to read.`});
+    const age = r[3] === null ? (mode === 'int' ? 0 : null) : r[3];
+    const warn = r[3] === null;
+    f.push({cur:i, line:'r', objs:objs.slice(), msg:`Read the columns of row ${i+1}: id ${r[0]}, name "${r[1]}", email ${r[2]}.`});
+    f.push({cur:i, line:'a', objs:objs.slice(), warnAge:warn, msg: warn
+      ? (mode === 'int' ? 'Age is <b>NULL</b> in the database, but <b>getInt("age")</b> returns <b>0</b>. Aman now looks 0 years old. That\'s a silent bug. Switch the dropdown to getObject.' : 'Age is <b>NULL</b>. <b>getObject("age", Integer.class)</b> returns <b>null</b>, which is honest: no age recorded.')
+      : `Age is ${r[3]}. Both getInt and getObject give ${r[3]} here.`});
+    objs.push({id:r[0], name:r[1], age, warn: warn && mode === 'int'});
+    f.push({cur:i, line:'add', objs:objs.slice(), msg:`Build the Student and add it to the list. List size: ${objs.length}.`});
+  });
+  f.push({cur:3, line:'w', objs:objs.slice(), msg:'<b>next()</b> → no more rows, returns <b>false</b>. The loop ends.'});
+  f.push({cur:3, line:'end', objs:objs.slice(), msg:`Done: a List&lt;Student&gt; with ${objs.length} objects. JDBC never made a Student itself. You did.`});
+  return f;
+}
+const rsRender = f => {
+  const mode = $('#rs-mode').value;
+  $('#rs-table').innerHTML = `<tr><th></th><th>id</th><th>name</th><th>email</th><th>age</th></tr>` +
+    `<tr class="${f.cur === -1 ? 'before' : ''}"><td class="cur">${f.cur === -1 ? '☞' : ''}</td><td colspan="4" class="note">(before first row)</td></tr>` +
+    ROWS.map((r, i) => `<tr class="${f.cur === i ? 'on' : i < f.cur ? 'read' : ''}"><td class="cur">${f.cur === i ? '☞' : ''}</td><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3] === null ? '<i>NULL</i>' : r[3]}</td></tr>`).join('') +
+    `<tr class="${f.cur === 3 ? 'before' : ''}"><td class="cur">${f.cur === 3 ? '☞' : ''}</td><td colspan="4" class="note">(after last row)</td></tr>`;
+  $('#rs-objs').innerHTML = f.objs.length ? f.objs.map(o => `<span class="obj ${o.warn ? 'warn' : ''}">Student{id=${o.id}, name=${o.name}, age=${o.age}}</span>`).join('') : '<span class="note">empty</span>';
+  $('#rs-code').innerHTML = RS_CODE.map(([id, t]) => {
+    t = t.replace('AGE_READ', mode === 'int' ? 'rs.getInt("age")' : 'rs.getObject("age", Integer.class)');
+    const c = t.indexOf('//');
+    return `<div class="${f.line === id ? 'on' : ''}">${c >= 0 ? esc(t.slice(0, c)) + '<span class="c">' + esc(t.slice(c)) + '</span>' : esc(t)}</div>`;
+  }).join('');
+  $('#rs-msg').innerHTML = f.msg;
+};
+const rsStep = stepper($('#rsb'), rsFrames('obj'), rsRender, 1500);
+$('#rs-mode').onchange = () => rsStep.reload(rsFrames($('#rs-mode').value));
+
+/* ---------- injection lab ---------- */
+let injMode = 'glue';
+function inj(){
+  const name = $('#inj-in').value;
+  if(injMode === 'glue'){
+    const pre = "INSERT INTO students(name, email, age) VALUES ('", post = "', 'rahul@gmail.com', 24)";
+    const full = pre + name + post, from = pre.length, to = pre.length + name.length;
+    let inStr = false, html = '', anyX = false, quotes = 0;
+    for(let k = 0; k < full.length; k++){
+      const ch = full[k], user = k >= from && k < to;
+      let cls = '';
+      if(ch === "'"){ inStr = !inStr; quotes++; cls = user ? 'x' : 'q'; if(user) anyX = true; }
+      else if(user){ cls = inStr ? 'u' : 'x'; if(!inStr && ch.trim()) anyX = true; }
+      html += cls ? `<span class="${cls}">${esc(ch)}</span>` : esc(ch);
+    }
+    $('#inj-sql').innerHTML = html;
+    $('#inj-msg').innerHTML = !anyX
+      ? '<span class="verdict ok">Looks fine, this time.</span> The name stays inside its quotes. But you\'re trusting every user to never type a quote mark.'
+      : (name.includes('DROP') || name.includes(';')
+        ? '<span class="verdict bad">Injected!</span> The quote in the "name" closed the text early. Everything in red is now real SQL to MySQL, including <code>DROP TABLE students</code>. The <code>--</code> comments out the leftovers.'
+        : '<span class="verdict bad">Broken SQL.</span> The apostrophe in the name ends the text early. MySQL sees garbage after it and throws a syntax error. A real name just crashed your insert.');
+  } else {
+    $('#inj-sql').innerHTML = `<span>INSERT INTO students(name, email, age) VALUES (<span class="q">?</span>, <span class="q">?</span>, <span class="q">?</span>)</span>\n\n<span class="note">values sent separately:</span>\n  1 → <span class="u">${esc(name) || '(empty)'}</span>\n  2 → <span class="u">rahul@gmail.com</span>\n  3 → <span class="u">24</span>`;
+    $('#inj-msg').innerHTML = '<span class="verdict ok">Safe.</span> The SQL\'s shape is fixed before any value arrives. The name is only ever data, quotes and semicolons included. MySQL would store it as a (weird) name.';
+  }
+}
+$('#inj-in').oninput = inj;
+document.querySelectorAll('[data-inj]').forEach(b => b.onclick = () => { $('#inj-in').value = b.dataset.inj; inj(); });
+$('#inj-glue').onclick = () => { injMode = 'glue'; $('#inj-glue').classList.add('on'); $('#inj-prep').classList.remove('on'); inj(); };
+$('#inj-prep').onclick = () => { injMode = 'prep'; $('#inj-prep').classList.add('on'); $('#inj-glue').classList.remove('on'); inj(); };
+inj();
+
+/* ---------- CRUD tabs ---------- */
+$('#crud-tabs').onclick = e => {
+  const t = e.target.closest('.tab'); if(!t) return;
+  $('#crud-tabs').querySelectorAll('.tab').forEach(x => x.setAttribute('aria-selected', x === t));
+  document.querySelectorAll('#crud [data-panel]').forEach(p => p.hidden = p.dataset.panel !== t.dataset.tab);
+};
+
+/* ---------- closing stepper ---------- */
+const CL_CODE = [
+  ['c', 'try (Connection conn = DriverManager.getConnection(...);'],
+  ['p', '     PreparedStatement ps = conn.prepareStatement(sql);'],
+  ['r', '     ResultSet rs = ps.executeQuery()) {'],
+  ['u', '    while (rs.next()) { ... }          // use them'],
+  ['x', '}                                      // Java closes: rs → ps → conn']];
+const CLF = [
+  {o:[0,0,0], k:null, line:null, msg:'Nothing open yet.'},
+  {o:[1,0,0], k:null, line:'c', msg:'Open the <b>Connection</b>: dial and log in. This is the outer box.'},
+  {o:[1,1,0], k:null, line:'p', msg:'The connection creates a <b>PreparedStatement</b>, a box inside it.'},
+  {o:[1,1,1], k:null, line:'r', msg:'The statement creates a <b>ResultSet</b>, the innermost box.'},
+  {o:[1,1,1], k:null, line:'u', msg:'Read the rows. All three are open and in use.'},
+  {o:[1,1,1], k:2, line:'x', msg:'Leaving the try block. Java closes the <b>ResultSet</b> first: it depends on the statement.'},
+  {o:[1,1,0], k:1, line:'x', msg:'Then the <b>PreparedStatement</b>: it depends on the connection.'},
+  {o:[1,0,0], k:0, line:'x', msg:'Finally the <b>Connection</b>. Line hung up. This also happens if an exception is thrown.'},
+  {o:[0,0,0], k:null, line:null, msg:'All closed, in reverse order of opening. No leaks. You wrote zero close() calls.'}];
+stepper($('#cl'), CLF, f => {
+  const names = ['Connection · the call', 'PreparedStatement · the form', 'ResultSet · the answers'];
+  const box = i => `<div class="box b${i+1} ${f.o[i] ? 'open' : ''} ${f.k === i ? 'closing' : ''}"><div class="lab"><span>${names[i]}</span><span>${f.k === i ? 'closing…' : f.o[i] ? 'open' : 'closed'}</span></div>${i < 2 ? box(i+1) : ''}</div>`;
+  $('#cl-boxes').innerHTML = box(0);
+  $('#cl-code').innerHTML = CL_CODE.map(([id, t]) => { const c = t.indexOf('//'); return `<div class="${f.line === id ? 'on' : ''}">${c >= 0 ? esc(t.slice(0, c)) + '<span class="c">' + esc(t.slice(c)) + '</span>' : esc(t)}</div>`; }).join('');
+  $('#cl-msg').innerHTML = f.msg;
+}, 1500);
+
+/* ---------- troubleshooter ---------- */
+const ERRS = [
+  ['Communications link failure / Connection refused', 'The phone rings but nobody picks up. Java can\'t reach MySQL at all.', ['Is MySQL Server running? (Windows: services.msc → MySQL84 → Start)', 'Is the host right (<code>localhost</code>)?', 'Is the port right (<code>3306</code>)?', 'Is a firewall blocking it?', 'Is a second MySQL install using a different port?']],
+  ["Access denied for user 'root'@'localhost'", 'They picked up but don\'t accept your login.', ['Check the username.', 'Check the password (the one you set during install).', 'Check the user\'s permissions in MySQL.', 'Check the user is allowed to connect from this host.']],
+  ["Unknown database 'student_db'", 'You reached the shop but asked for a department that doesn\'t exist.', ['Create it: <code>CREATE DATABASE student_db;</code>', 'Check the spelling in the URL.']],
+  ['Public Key Retrieval is not allowed (DBeaver)', 'A login-security setting on local MySQL setups.', ['Edit the connection → Driver Properties.', 'Set <code>allowPublicKeyRetrieval = true</code> (local development only).', 'If your local server has no TLS, some people also set <code>useSSL = false</code>. Never do that for remote or production databases.']],
+  ["Duplicate entry 'rahul@gmail.com' for key 'email'", 'Not a setup problem. The table is doing its job.', ['<code>email</code> is UNIQUE, so the same email can\'t be inserted twice.', 'Expected behaviour. Later, catch it and show "email already exists".']],
+  ['mysql: command not found', 'The terminal doesn\'t know where the mysql program lives.', ['Windows: run it from <code>C:\\Program Files\\MySQL\\MySQL Server 8.4\\bin</code>, or add that folder to PATH.', 'macOS (official installer): <code>/usr/local/mysql/bin/mysql -u root -p</code>, or add it to PATH in <code>~/.zshrc</code>.']],
+  ['Windows: service name not found', 'You guessed the service name. It varies by version.', ['List it: <code>sc query type= service state= all | findstr /I mysql</code>', 'Then use the exact name: <code>net start MySQL84</code>']]];
+$('#errs').innerHTML = ERRS.map((e, i) => `<button class="btn sm" type="button" data-i="${i}">${esc(e[0])}</button>`).join('');
+function errShow(i){
+  $('#errs').querySelectorAll('button').forEach((b, x) => b.classList.toggle('on', x === i));
+  const e = ERRS[i]; $('#err-out').innerHTML = `<b>${esc(e[0])}</b><span class="real">${e[1]}</span><ol>${e[2].map(s => `<li>${s}</li>`).join('')}</ol>`;
+}
+$('#errs').onclick = e => { const b = e.target.closest('button'); if(b) errShow(+b.dataset.i); };
+errShow(0);
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-powershell.min.js"></script>
+<script>
+/* Diagram fallback. The claude.ai viewer draws <pre class="mermaid"> blocks itself. When this page is opened as a plain
+   file (or anywhere else that doesn't), load Mermaid from a CDN and draw them, instead of showing the raw diagram text. */
+(function () {
+  const blocks = () => Array.from(document.querySelectorAll('pre.mermaid'));
+  if (!blocks().length) return;
+  const drawn = p => !!p.querySelector('svg');
+  function load() {
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/mermaid@10.9.3/dist/mermaid.min.js';
+    s.onload = () => {
+      const t = document.documentElement.dataset.theme;
+      const dark = t === 'dark' || (t !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
+      try {
+        mermaid.initialize({ startOnLoad: false, theme: dark ? 'dark' : 'default', securityLevel: 'strict' });
+        mermaid.run({ nodes: blocks().filter(p => !drawn(p)) });
+      } catch (e) {}
+    };
+    s.onerror = () => blocks().filter(p => !drawn(p)).forEach(p =>
+      p.insertAdjacentHTML('afterend', '<p style="font-size:.85rem;opacity:.7">This diagram needs an internet connection to draw.</p>'));
+    document.head.append(s);
+  }
+  addEventListener('load', () => setTimeout(() => {
+    // the claude.ai viewer adds its own Mermaid runtime (a global `mermaid` plus .mermaid-diagram mounts): leave it alone
+    if (window.mermaid || document.querySelector('.mermaid-diagram, [data-claude-mermaid-claimed]')) return;
+    if (!blocks().every(drawn)) load();
+  }, 1200));
+})();
+</script>

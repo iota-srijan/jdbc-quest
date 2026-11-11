@@ -1,0 +1,1120 @@
+<title>JDBC Quest</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;600;700&display=swap">
+<style>
+/* Layout: a dark course app. Sticky XP bar on top; lesson list | lesson text | challenge + editor. Deliberately dark-only. */
+:root{
+  --bg:#0A0D18; --panel:#111628; --panel2:#171D35; --edge:#262E4E; --ink:#E7EBF7; --muted:#8C95B4; --dim:#5D6585;
+  --gold:#F4C14B; --violet:#8B7BFF; --green:#3DDB96; --red:#FF5C7A; --cyan:#4CC9F0; --orange:#FF9F43;
+  --violet-s:#221F4A; --green-s:#0F2E25; --red-s:#3A1525; --gold-s:#3A2E10; --cyan-s:#0E2B38;
+  --f-display:'Chakra Petch','Segoe UI',system-ui,sans-serif;
+  --f-body:'Atkinson Hyperlegible','Segoe UI',system-ui,sans-serif;
+  --f-mono:'JetBrains Mono',ui-monospace,Consolas,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{min-height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.6;margin:0}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--panel)}
+a{color:var(--cyan)}
+code,kbd{font-family:var(--f-mono);font-size:.86em}
+:not(pre)>code{background:var(--panel2);border:1px solid var(--edge);padding:.05em .35em;border-radius:5px;color:var(--ink)}
+button,select,input,textarea{font:inherit;color:var(--ink)}
+:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+
+/* top bar */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--panel);border-bottom:1px solid var(--edge);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:10px}
+.top-in{display:flex;align-items:center;gap:14px;flex-wrap:wrap;max-width:1800px;margin:0 auto}
+.brand{font-family:var(--f-display);font-weight:700;font-size:1.25rem;letter-spacing:.02em;display:flex;align-items:center;gap:8px}
+.brand i{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:8px;background:var(--violet);color:var(--bg);font-style:normal;font-size:.95rem}
+.lvl{display:flex;align-items:center;gap:10px;flex:1;min-width:220px;max-width:460px}
+.lvl .badge{font-family:var(--f-display);font-weight:700;background:var(--gold-s);color:var(--gold);border:1px solid var(--gold);border-radius:8px;padding:2px 9px;white-space:nowrap}
+.xpbar{flex:1;height:10px;border-radius:6px;background:var(--panel2);border:1px solid var(--edge);overflow:hidden}
+.xpbar i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--orange));transition:width .5s}
+.xptext{font-family:var(--f-mono);font-size:.78rem;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+.stat{font-family:var(--f-mono);font-size:.8rem;color:var(--muted);white-space:nowrap}
+.stat b{color:var(--ink)}
+.tbtn{background:var(--panel2);border:1px solid var(--edge);border-radius:8px;padding:6px 11px;cursor:pointer;font-size:.85rem}
+.tbtn:hover{border-color:var(--muted)}
+#menu-btn{display:none}
+
+/* app grid */
+.app{display:grid;grid-template-columns:240px minmax(0,.85fr) minmax(0,1.45fr);gap:0;max-width:1800px;margin:0 auto;min-height:calc(100vh - 60px)}
+.side{border-right:1px solid var(--edge);padding:16px 12px 40px;padding-left:max(12px,env(safe-area-inset-left,0px));display:grid;gap:18px;align-content:start;position:sticky;top:60px;max-height:calc(100vh - 60px);overflow:auto}
+.chap h3{font-family:var(--f-display);font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 0 8px 6px;display:flex;justify-content:space-between}
+.chap ol{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+.li{width:100%;display:grid;grid-template-columns:26px minmax(0,1fr) auto;gap:8px;align-items:center;text-align:left;background:none;border:1px solid transparent;border-radius:9px;padding:6px 8px;cursor:pointer;font-size:.9rem;color:var(--ink)}
+.li:hover{background:var(--panel2)}
+.li.cur{background:var(--violet-s);border-color:var(--violet)}
+.li.locked{color:var(--dim);cursor:not-allowed}
+.li .dot{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-family:var(--f-mono);font-size:.68rem;font-weight:700;border:2px solid var(--edge);color:var(--muted)}
+.li.done .dot{background:var(--green);border-color:var(--green);color:var(--bg)}
+.li.cur .dot{border-color:var(--violet);color:var(--violet)}
+.li .k{font-family:var(--f-mono);font-size:.62rem;letter-spacing:.06em;color:var(--muted);text-transform:uppercase}
+.li.boss .dot{border-radius:6px;border-color:var(--red);color:var(--red)}
+.side-foot{display:grid;gap:8px;font-size:.82rem;color:var(--muted);padding-inline:6px}
+.side-foot label{display:flex;gap:8px;align-items:center;cursor:pointer}
+.side-foot input[type=number]{background:var(--panel2);border:1px solid var(--edge);border-radius:6px;padding:3px 6px;width:4.6em;color:var(--ink)}
+.restore-box{display:grid;gap:6px;color:var(--gold)}
+.restore-box .row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+
+.lesson{padding:24px 28px 60px;border-right:1px solid var(--edge);min-width:0}
+.lesson .crumb{font-family:var(--f-mono);font-size:.74rem;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.lesson h1{font-family:var(--f-display);font-size:clamp(1.6rem,3vw,2.2rem);line-height:1.15;margin:.2em 0 .6em;text-wrap:balance}
+.lesson .body{display:grid;gap:14px;max-width:68ch}
+.lesson .body p{margin:0}
+.lesson .body h4{font-family:var(--f-display);font-size:1.05rem;margin:.6em 0 0;color:var(--gold)}
+.lesson .body ul,.lesson .body ol{margin:0;padding-left:1.25em;display:grid;gap:4px}
+.lesson pre,.cpre{background:var(--panel);border:1px solid var(--edge);border-radius:10px;padding:12px 14px;overflow-x:auto;margin:0;font-family:var(--f-mono);font-size:.8rem;line-height:1.6}
+.lesson .ana{border-left:3px solid var(--cyan);background:var(--cyan-s);padding:10px 14px;border-radius:0 10px 10px 0}
+.lesson .warn{border-left:3px solid var(--red);background:var(--red-s);padding:10px 14px;border-radius:0 10px 10px 0}
+.lesson .map{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;background:var(--panel);border:1px solid var(--edge);border-radius:10px;padding:12px 14px;margin:0}
+.lesson .map dt{font-weight:700}
+.lesson .map dd{margin:0;color:var(--muted)}
+.lesson .deep{font-size:.88rem;color:var(--muted)}
+.tc{color:#7E88A8} .tk{color:#C3A6FF} .ts{color:#8BE0B0}
+
+.chal{padding:20px 22px 60px;min-width:0;display:grid;gap:14px;align-content:start;grid-auto-rows:max-content;position:sticky;top:60px;max-height:calc(100vh - 60px);overflow:auto;padding-right:max(22px,env(safe-area-inset-right,0px))}
+.chal-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.kind{font-family:var(--f-display);font-weight:700;font-size:.78rem;letter-spacing:.12em;padding:3px 10px;border-radius:6px;border:1px solid}
+.kind.quiz{color:var(--cyan);border-color:var(--cyan);background:var(--cyan-s)}
+.kind.sql{color:var(--orange);border-color:var(--orange);background:var(--gold-s)}
+.kind.java{color:var(--violet);border-color:var(--violet);background:var(--violet-s)}
+.kind.attack{color:var(--red);border-color:var(--red);background:var(--red-s)}
+.kind.local{color:var(--green);border-color:var(--green);background:var(--green-s)}
+.kind.boss{color:var(--bg);border-color:var(--red);background:var(--red)}
+.reward{font-family:var(--f-mono);font-size:.8rem;color:var(--gold)}
+.donechip{font-family:var(--f-mono);font-size:.78rem;color:var(--green)}
+.task{background:var(--panel);border:1px solid var(--edge);border-radius:12px;padding:12px 14px;display:grid;gap:8px}
+.task b.t{font-family:var(--f-display);font-size:1.02rem}
+.task ul{margin:0;padding-left:1.2em;display:grid;gap:3px;color:var(--muted);font-size:.92rem}
+
+/* editor */
+.ed{display:grid;grid-template-columns:auto minmax(0,1fr);background:#070A13;border:1px solid var(--edge);border-radius:12px;overflow:hidden}
+.ed .file{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;font-family:var(--f-mono);font-size:.74rem;color:var(--muted);background:var(--panel);border-bottom:1px solid var(--edge);padding:6px 12px}
+.gut{margin:0;padding:12px 8px 12px 12px;text-align:right;color:var(--dim);font-family:var(--f-mono);font-size:.98rem;line-height:1.65;user-select:none;overflow:hidden;background:#070A13}
+.ed textarea{border:none;outline:none;resize:vertical;background:transparent;color:var(--ink);font-family:var(--f-mono);font-size:.98rem;line-height:1.65;padding:12px 12px 12px 4px;min-height:max(440px,58vh);white-space:pre;overflow:auto;tab-size:4;caret-color:var(--gold)}
+.ed textarea:focus-visible{outline:none}
+.ed:focus-within{border-color:var(--violet)}
+.ed .edit-tip{color:var(--gold);font-weight:700;letter-spacing:.02em}
+.ed.fresh{border:2px solid var(--gold);box-shadow:0 0 0 4px var(--gold-s);animation:nudge 1.6s ease-in-out 3}
+.ed textarea{cursor:text}
+@keyframes nudge{50%{box-shadow:0 0 0 8px var(--gold-s)}}
+.ed-tools{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+body.focus .side,body.focus .lesson{display:none}
+body.focus .app{grid-template-columns:minmax(0,1fr)}
+body.focus .chal{grid-column:1;position:static;max-height:none;padding-left:max(24px,env(safe-area-inset-left,0px))}
+body.focus .ed textarea{min-height:68vh}
+.con{font-size:.86rem}
+.actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{border-radius:10px;padding:9px 16px;cursor:pointer;font-weight:700;border:1px solid var(--edge);background:var(--panel2);display:inline-flex;gap:6px;align-items:center}
+.btn:hover{border-color:var(--muted)}
+.btn.go{background:var(--violet);border-color:var(--violet);color:#0A0D18}
+.btn.go:hover{filter:brightness(1.1)}
+.btn.ok{background:var(--green);border-color:var(--green);color:#0A0D18}
+.btn.ghost{background:none}
+.btn:disabled{opacity:.4;cursor:default}
+.hintk{font-family:var(--f-mono);font-size:.72rem;color:var(--dim)}
+
+/* console */
+.con{background:#070A13;border:1px solid var(--edge);border-radius:12px;font-family:var(--f-mono);font-size:.8rem;line-height:1.55;overflow:auto;max-height:340px}
+.con .ch{display:flex;justify-content:space-between;padding:6px 12px;border-bottom:1px solid var(--edge);color:var(--muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;position:sticky;top:0;background:#070A13}
+.con .cb{padding:10px 12px;display:grid;gap:4px}
+.con .pass{color:var(--green)} .con .fail{color:var(--red)} .con .info{color:var(--muted)} .con .out{color:var(--ink)}
+.con .hint{color:var(--gold);padding-left:2ch}
+.con table{border-collapse:collapse;margin:4px 0 8px}
+.con th,.con td{border:1px solid var(--edge);padding:3px 9px;text-align:left;white-space:nowrap}
+.con th{color:var(--cyan);font-weight:600}
+.con td.null{color:var(--dim);font-style:italic}
+.banner{border-radius:12px;padding:12px 14px;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;font-weight:700}
+.banner.win{background:var(--green-s);border:1px solid var(--green);color:var(--green)}
+.banner.lose{background:var(--red-s);border:1px solid var(--red);color:var(--red)}
+
+/* quiz */
+.qz{display:grid;gap:14px}
+.qq{background:var(--panel);border:1px solid var(--edge);border-radius:12px;padding:12px 14px;display:grid;gap:8px}
+.qq .qt{font-weight:700}
+.opt{display:grid;grid-template-columns:22px minmax(0,1fr);gap:10px;align-items:start;text-align:left;background:var(--panel2);border:1.5px solid var(--edge);border-radius:10px;padding:8px 12px;cursor:pointer;font-size:.93rem}
+.opt:hover{border-color:var(--muted)}
+.opt .l{font-family:var(--f-mono);font-weight:700;color:var(--muted)}
+.opt.sel{border-color:var(--violet);background:var(--violet-s)}
+.opt.right{border-color:var(--green);background:var(--green-s)}
+.opt.wrong{border-color:var(--red);background:var(--red-s)}
+.qq .ex{font-size:.88rem;color:var(--muted)}
+
+/* attack */
+.atk{display:grid;gap:10px}
+.atk input{width:100%;font-family:var(--f-mono);background:#070A13;border:1px solid var(--edge);border-radius:10px;padding:10px 12px}
+.glued{font-family:var(--f-mono);font-size:.84rem;background:#070A13;border:1px solid var(--edge);border-radius:10px;padding:10px 12px;white-space:pre-wrap;word-break:break-word}
+.glued .u{background:var(--red);color:#0A0D18;border-radius:3px}
+
+/* local */
+.steps{margin:0;padding-left:1.3em;display:grid;gap:8px}
+.check{display:flex;gap:10px;align-items:flex-start;background:var(--panel);border:1px solid var(--edge);border-radius:10px;padding:10px 12px;cursor:pointer}
+.check input{margin-top:4px;accent-color:var(--green)}
+
+.toast{position:fixed;right:max(20px,env(safe-area-inset-right,0px));bottom:max(20px,env(safe-area-inset-bottom,0px));z-index:40;background:var(--gold);color:#0A0D18;font-family:var(--f-display);font-weight:700;font-size:1.3rem;padding:10px 18px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.5);animation:rise 1.8s ease forwards}
+@keyframes rise{0%{transform:translateY(20px);opacity:0}15%{transform:none;opacity:1}80%{opacity:1}100%{transform:translateY(-20px);opacity:0}}
+.confirm{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:.85rem;color:var(--gold)}
+
+@media (max-width:1180px){
+  .app{grid-template-columns:240px minmax(0,1fr)}
+  .chal{grid-column:2;position:static;max-height:none;border-top:1px solid var(--edge);padding-left:28px}
+  .lesson{border-right:none}
+}
+@media (max-width:820px){
+  #menu-btn{display:inline-block}
+  .app{grid-template-columns:minmax(0,1fr)}
+  .side{display:none;position:static;max-height:none;border-right:none;border-bottom:1px solid var(--edge);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  .side.open{display:grid}
+  .lesson,.chal{grid-column:1;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  .lvl{order:3;max-width:none;min-width:100%}
+}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<header class="top">
+  <div class="top-in">
+    <button class="tbtn" id="menu-btn" type="button" aria-expanded="false">☰ Lessons</button>
+    <div class="brand"><i>{}</i>JDBC Quest</div>
+    <div class="lvl"><span class="badge" id="lv">Lv 1</span><div class="xpbar"><i id="xpfill" style="width:0%"></i></div><span class="xptext" id="xptext">0 / 100 XP</span></div>
+    <span class="stat">done <b id="donecount">0</b>/<b id="total">0</b></span>
+  </div>
+</header>
+
+<div class="app">
+  <nav class="side" id="side" aria-label="Lessons"></nav>
+  <main class="lesson" id="lesson"></main>
+  <aside class="chal" id="chal" aria-label="Challenge"></aside>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-asm.js"></script>
+<script>
+/* ================= COURSE DATA ================= */
+const LAB1 = 'jdbc-fundamentals.html';
+const LAB2 = 'spring-jdbc.html';
+const SEED = `CREATE TABLE students (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  email TEXT NOT NULL UNIQUE,
+  age INTEGER
+);
+INSERT INTO students(name, email, age) VALUES
+  ('Rahul', 'rahul@gmail.com', 24),
+  ('Priya', 'priya@gmail.com', 22),
+  ('Aman', 'aman@gmail.com', NULL),
+  ('Neha', 'neha@gmail.com', 27),
+  ('Vikram', 'vikram@gmail.com', 31);`;
+
+const has = re => c => re.test(c);
+const not = re => c => !re.test(c);
+const sqlVar = c => (c.match(/String sql ?= ?("(?:[^"\\]|\\.)*"(?: ?\+ ?[^;]+)?);/) || [])[1] || '';
+
+const COURSE = [
+{ id:'c1', title:'Chapter 1 · Raw JDBC', lessons:[
+
+{ id:'1-1', title:'Two programs, one translator', kind:'quiz', xp:10,
+  body:`<div class="ana">Think of phoning a shop in another country. You need a phone everyone knows how to use, and a translator on the line who speaks the shop's language.</div>
+<p>Your Java app and MySQL are <b>separate programs</b>, maybe on different computers. Writing <code>String sql = "SELECT ..."</code> only puts text in Java's memory. Nothing has reached MySQL yet.</p>
+<dl class="map"><dt>Shop abroad</dt><dd>MySQL Server: stores data, runs SQL</dd><dt>Standard phone</dt><dd>JDBC API (<code>java.sql</code>): Connection, PreparedStatement, ResultSet</dd><dt>Translator</dt><dd>JDBC driver: MySQL Connector/J</dd><dt>A viewer app</dt><dd>DBeaver: runs SQL by hand, is <i>not</i> the server</dd></dl>
+<pre>Java code → JDBC API → MySQL driver → network :3306 → MySQL Server
+         ← ResultSet / row count ← driver ← rows, count or error</pre>
+<p class="deep">Deep dive: <a href="${LAB1}#journey" target="_blank" rel="noopener">step-through of one query's journey</a>.</p>`,
+  qs:[
+    {q:'Your code runs <code>String sql = "SELECT * FROM students";</code>. What has MySQL received?', o:['The SQL query','Nothing yet: it\'s just text in Java\'s memory','A ResultSet','An open connection'], a:1, ex:'A String is only text. It travels only when you send it through a statement on a connection.'},
+    {q:'Which piece converts your JDBC calls into MySQL\'s network language?', o:['The JDBC API','DBeaver','MySQL Connector/J (the driver)','The JVM'], a:2, ex:'The driver implements the JDBC interfaces for one specific database.'},
+    {q:'You installed DBeaver but never installed MySQL Server. Can your Java app connect?', o:['Yes, DBeaver includes a server','No. DBeaver is only a client; the server must be installed and running','Only on localhost','Only with Class.forName()'], a:1, ex:'DBeaver, like your app, is a client. Both need a running server.'}]},
+
+{ id:'1-2', title:'Dial the database', kind:'java', xp:25, file:'Main.java',
+  body:`<p>A <b>JDBC URL</b> is the phone number. Each part means something:</p>
+<pre>jdbc:mysql://localhost:3306/student_db
+│    │       │         │    └─ database name
+│    │       │         └────── port (MySQL default 3306)
+│    │       └──────────────── host (this machine)
+│    └──────────────────────── database type → picks the driver
+└───────────────────────────── JDBC prefix</pre>
+<p><code>DriverManager.getConnection(url, user, password)</code> reads the URL, finds the MySQL driver, connects and logs in. Put the <code>Connection</code> in <b>try-with-resources</b> so it always gets closed ("hung up").</p>
+<div class="warn"><b>Old habit:</b> <code>Class.forName("com.mysql.cj.jdbc.Driver")</code> isn't needed since JDBC 4.0. The driver registers itself.</div>`,
+  task:{t:'Connect to student_db', items:['Set <code>URL</code> for database <code>student_db</code> on <code>localhost</code>, port <code>3306</code>.','Open the connection with <code>DriverManager.getConnection(URL, USERNAME, PASSWORD)</code> inside try-with-resources.','Print <code>Database connected successfully</code>.','Catch <code>SQLException</code>.']},
+  starter:`import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+
+public class Main {
+    // TODO: student_db on this machine, default MySQL port
+    private static final String URL = "";
+    private static final String USERNAME = "root";
+    private static final String PASSWORD = "your_password";
+
+    public static void main(String[] args) {
+        // TODO: open a Connection inside try-with-resources,
+        //       print "Database connected successfully",
+        //       and catch SQLException
+    }
+}`,
+  tests:[
+    {n:'URL points at localhost:3306/student_db', t:has(/URL ?= ?"jdbc:mysql:\/\/localhost:3306\/student_db"/), h:'Format: "jdbc:mysql://HOST:PORT/DATABASE".'},
+    {n:'Connection opened in try-with-resources', t:has(/try ?\( ?Connection \w+ ?= ?DriverManager\.getConnection\( ?URL ?, ?USERNAME ?, ?PASSWORD ?\) ?\)/), h:'try (Connection connection = DriverManager.getConnection(URL, USERNAME, PASSWORD)) { ... }'},
+    {n:'Prints the success message', t:has(/System\.out\.println\( ?"Database connected successfully" ?\)/), h:'Exact text: "Database connected successfully".'},
+    {n:'Catches SQLException', t:has(/catch ?\( ?SQLException \w+ ?\)/), h:'getConnection() throws the checked SQLException.'},
+    {n:'No Class.forName()', t:not(/Class\.forName/), h:'Remove it. Modern drivers register themselves.'}],
+  out:['Database connected successfully'],
+  solution:`import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+
+public class Main {
+    private static final String URL = "jdbc:mysql://localhost:3306/student_db";
+    private static final String USERNAME = "root";
+    private static final String PASSWORD = "your_password";
+
+    public static void main(String[] args) {
+        try (Connection connection = DriverManager.getConnection(URL, USERNAME, PASSWORD)) {
+            System.out.println("Database connected successfully");
+        } catch (SQLException e) {
+            System.out.println("Message: " + e.getMessage());
+        }
+    }
+}`},
+
+{ id:'1-3', title:'SQL warm-up: SELECT', kind:'sql', xp:20,
+  body:`<p>Before Java sends SQL, you need to write SQL that works. This editor runs on a <b>real database</b> inside your browser (SQLite, very close to MySQL for these basics).</p>
+<p>The <code>students</code> table already has 5 rows. Press <b>Run</b> on the starter query to see them.</p>
+<pre>SELECT columns FROM table WHERE condition ORDER BY column;</pre>
+<div class="ana"><b>Habit from the notes:</b> list the columns you need instead of <code>SELECT *</code>. It's clearer, fetches less, and makes mapping predictable.</div>
+<p>Notice Aman's age is <code>NULL</code> (empty). <code>NULL</code> is never "greater than 22", so it drops out of comparisons.</p>`,
+  task:{t:'Older than 22, youngest first', items:['Return only the <code>name</code> and <code>age</code> columns.','Only students with age greater than 22.','Sort youngest first.']},
+  starter:`-- Run me first to see the data, then replace with your query
+SELECT * FROM students;`,
+  expect:'SELECT name, age FROM students WHERE age > 22 ORDER BY age', ordered:true, matchCols:true,
+  solution:`SELECT name, age
+FROM students
+WHERE age > 22
+ORDER BY age;`},
+
+{ id:'1-4', title:'Changing data: INSERT & UPDATE', kind:'sql', xp:20,
+  body:`<p><code>INSERT</code>, <code>UPDATE</code> and <code>DELETE</code> don't return rows. They return a <b>count of affected rows</b>. In JDBC that count is what <code>executeUpdate()</code> gives you.</p>
+<pre>INSERT INTO students(name, email, age) VALUES ('Riya', 'riya@gmail.com', 23);  -- 1 row affected
+UPDATE students SET age = 30 WHERE id = 99;                                    -- 0 rows: no id 99</pre>
+<p>Watch the console after <b>Run</b>: each statement shows its affected-row count, exactly like <code>executeUpdate()</code>.</p>
+<div class="warn">An <code>UPDATE</code> without <code>WHERE</code> changes <i>every</i> row. The checker will notice.</div>`,
+  task:{t:'Add Kabir, fix Rahul', items:['Insert <b>Kabir</b>, email <code>kabir@gmail.com</code>, age <code>21</code>.','Change <b>Rahul</b>\'s age to <code>25</code>.','Don\'t change anyone else.']},
+  starter:`-- 1) INSERT Kabir
+
+-- 2) UPDATE Rahul's age
+`,
+  verify:[
+    {sql:"SELECT name, email, age FROM students WHERE email = 'kabir@gmail.com'", rows:[['Kabir','kabir@gmail.com',21]], n:'Kabir was inserted correctly'},
+    {sql:"SELECT age FROM students WHERE name = 'Rahul'", rows:[[25]], n:'Rahul is now 25'},
+    {sql:"SELECT name, age FROM students WHERE name <> 'Rahul' AND name <> 'Kabir' ORDER BY id", rows:[['Priya',22],['Aman',null],['Neha',27],['Vikram',31]], n:'Nobody else changed'}],
+  solution:`INSERT INTO students(name, email, age) VALUES ('Kabir', 'kabir@gmail.com', 21);
+UPDATE students SET age = 25 WHERE name = 'Rahul';`},
+
+{ id:'1-5', title:'Which execute method?', kind:'quiz', xp:10,
+  body:`<p>A <code>Connection</code> is the open call. To actually say something, create a statement from it and pick how to send it, based on what you expect back:</p>
+<dl class="map"><dt><code>executeQuery()</code></dt><dd>SELECT → returns a <b>ResultSet</b> (rows)</dd><dt><code>executeUpdate()</code></dt><dd>INSERT / UPDATE / DELETE (and DDL) → returns an <b>int</b> count</dd><dt><code>execute()</code></dt><dd>Unknown or mixed results → returns a <b>boolean</b></dd></dl>
+<div class="warn"><code>execute()</code>'s boolean tells you the <i>type</i> of the first result: <code>true</code> = rows, <code>false</code> = a count or nothing. It does <b>not</b> mean success or failure.</div>`,
+  qs:[
+    {q:'<code>DELETE FROM students WHERE id = ?</code>: which method?', o:['executeQuery()','executeUpdate()','execute()','getResultSet()'], a:1, ex:'Despite the name, executeUpdate() runs DELETE and INSERT too.'},
+    {q:'<code>UPDATE students SET age = 25 WHERE id = 99</code> and no student has id 99. What does executeUpdate() return?', o:['It throws SQLException','-1','0','null'], a:2, ex:'0 rows matched. Not an error, just "not found".'},
+    {q:'<code>statement.execute(sql)</code> returned <code>false</code>. What does that mean?', o:['The SQL failed','The first result is an update count (or there is none)','The table is empty','The connection closed'], a:1, ex:'Then call getUpdateCount(). If it were true you\'d call getResultSet().'}]},
+
+{ id:'1-6', title:'Walk the ResultSet', kind:'java', xp:25, file:'StudentRepository.java',
+  body:`<div class="ana">A ResultSet is someone reading rows to you with a finger on the current line. The finger starts <b>above</b> the first row.</div>
+<p><code>rs.next()</code> moves the finger down one row and returns <code>true</code> if there was a row there, <code>false</code> when the rows run out.</p>
+<pre><span class="tk">if</span> (rs.next())    { ... }   <span class="tc">// exactly one row expected</span>
+<span class="tk">while</span> (rs.next()) { ... }   <span class="tc">// many rows</span></pre>
+<p>JDBC never builds a <code>Student</code> for you. You read the columns yourself, usually in one reusable <code>mapRow(rs)</code> method.</p>
+<p class="deep">Deep dive: <a href="${LAB1}#rs" target="_blank" rel="noopener">animated cursor demo</a>.</p>`,
+  task:{t:'Fill the list', items:['Loop over <b>every</b> row.','Turn each row into a Student with <code>mapRow(rs)</code>.','Add it to <code>students</code>.']},
+  starter:`public List<Student> findAll() {
+    String sql = "SELECT id, name, email, age FROM students";
+    List<Student> students = new ArrayList<>();
+    try (Connection connection = DriverManager.getConnection(URL, USERNAME, PASSWORD);
+         PreparedStatement ps = connection.prepareStatement(sql);
+         ResultSet rs = ps.executeQuery()) {
+
+        // TODO: move through every row and add mapRow(rs) to the list
+
+        return students;
+    } catch (SQLException e) {
+        throw new RuntimeException("Failed to fetch students", e);
+    }
+}`,
+  tests:[
+    {n:'Loops with while (rs.next())', t:has(/while ?\( ?rs\.next\(\) ?\)/), h:'while (rs.next()) { ... } keeps going until next() returns false.'},
+    {n:'Does not use if (rs.next()) for a list', t:not(/if ?\( ?rs\.next\(\) ?\)/), h:'if (rs.next()) reads only the first row.'},
+    {n:'Adds mapRow(rs) to the list', t:has(/students\.add\( ?mapRow\( ?rs ?\) ?\)/), h:'students.add(mapRow(rs));'},
+    {n:'Still returns the list', t:has(/return students ?;/), h:'Keep return students;'}],
+  out:['[Student{id=1, name=\'Rahul\', age=24}, Student{id=2, name=\'Priya\', age=22}, Student{id=3, name=\'Aman\', age=null}, ...]'],
+  solution:`public List<Student> findAll() {
+    String sql = "SELECT id, name, email, age FROM students";
+    List<Student> students = new ArrayList<>();
+    try (Connection connection = DriverManager.getConnection(URL, USERNAME, PASSWORD);
+         PreparedStatement ps = connection.prepareStatement(sql);
+         ResultSet rs = ps.executeQuery()) {
+        while (rs.next()) {
+            students.add(mapRow(rs));
+        }
+        return students;
+    } catch (SQLException e) {
+        throw new RuntimeException("Failed to fetch students", e);
+    }
+}`},
+
+{ id:'1-7', title:'The NULL trap', kind:'quiz', xp:10,
+  body:`<p>Aman's age is <code>NULL</code> in the database. Look what each getter does with it:</p>
+<pre>rs.getInt("age")                    <span class="tc">// 0     ← a fake age!</span>
+rs.getObject("age", Integer.class)  <span class="tc">// null  ← honest: no age recorded</span></pre>
+<p><code>getInt</code> returns a primitive <code>int</code>, which can't be null, so JDBC gives you <code>0</code> (you'd have to call <code>wasNull()</code> to notice). For a nullable <code>Integer</code> field, use <code>getObject(..., Integer.class)</code>.</p>
+<p>On the way in it's the same story: <code>setObject(3, student.getAge())</code> handles a null age; <code>setInt</code> would crash on null.</p>`,
+  qs:[
+    {q:'Aman\'s age column is NULL. What does <code>rs.getInt("age")</code> return?', o:['null','0','-1','It throws'], a:1, ex:'Primitive int can\'t be null, so you get 0 silently.'},
+    {q:'Which line keeps an empty age as <code>null</code>?', o:['rs.getInt("age")','rs.getString("age")','rs.getObject("age", Integer.class)','rs.getLong("age")'], a:2, ex:'getObject with Integer.class returns a nullable Integer.'},
+    {q:'A fresh ResultSet has 2 rows. You call <code>next()</code> three times. What do the calls return?', o:['true, true, true','false, true, true','true, true, false','true, false, false'], a:2, ex:'Above row 1 → row 1 (true) → row 2 (true) → nothing left (false).'}]},
+
+{ id:'1-8', title:'Be the attacker', kind:'attack', xp:20,
+  body:`<p>This code glues the user's input straight into SQL:</p>
+<pre>String sql = "SELECT name, email FROM students WHERE email = '" + email + "'";</pre>
+<p>It expects a normal email. But the "email" is just text the user typed. If it contains a quote mark <code>'</code>, it can end the text early and add its own SQL. That's <b>SQL injection</b>.</p>
+<p>Your job: type an "email" that makes this query return <b>every student</b>, not just one. The query runs for real on the database below.</p>
+<div class="ana">Hint if stuck: close the quote, then add a condition that's always true. Something like <code>... OR 'a'='a</code>.</div>`,
+  task:{t:'Dump the whole table', items:['Type into the email box.','The glued SQL and its real results update as you type.','Win when all 5 students come back.']},
+  attack:{pre:"SELECT name, email FROM students WHERE email = '", post:"'", start:'priya@gmail.com', target:5},
+  solution:`' OR '1'='1`},
+
+{ id:'1-9', title:'Kill the injection', kind:'java', xp:30, file:'StudentRepository.java',
+  body:`<div class="ana">Instead of letting the caller dictate your sentence, give them a <b>form with blanks</b>. Whatever they write in a blank stays inside that blank.</div>
+<p>A <b>PreparedStatement</b> sends the SQL with <code>?</code> placeholders first, then the values separately. A value can never become SQL code.</p>
+<pre>String sql = "SELECT ... WHERE email = ?";       <span class="tc">// the form</span>
+PreparedStatement ps = connection.prepareStatement(sql);
+ps.setString(1, email);                           <span class="tc">// blank #1 (counting starts at 1!)</span>
+try (ResultSet rs = ps.executeQuery()) { ... }    <span class="tc">// no argument here</span></pre>
+<p>Because you need to set the value before running the query, the <code>ResultSet</code> gets its own inner try-with-resources.</p>`,
+  task:{t:'Rewrite findByEmail safely', items:['SQL uses <code>WHERE email = ?</code>, no <code>+</code> gluing.','Use <code>connection.prepareStatement(sql)</code>.','Fill the blank with <code>setString(1, email)</code>.','Call <code>executeQuery()</code> with no argument.']},
+  starter:`public Optional<Student> findByEmail(String email) {
+    String sql = "SELECT id, name, email, age FROM students WHERE email = '" + email + "'";
+    try (Connection connection = DriverManager.getConnection(URL, USERNAME, PASSWORD);
+         Statement statement = connection.createStatement();
+         ResultSet rs = statement.executeQuery(sql)) {
+        if (rs.next()) return Optional.of(mapRow(rs));
+        return Optional.empty();
+    } catch (SQLException e) {
+        throw new RuntimeException("Failed to fetch " + email, e);
+    }
+}`,
+  tests:[
+    {n:'SQL string has no gluing', t:c => { const s = sqlVar(c); return s && !s.includes('+'); }, h:'The String sql = ...; line must not contain + at all.'},
+    {n:'SQL uses a ? placeholder for email', t:c => /email ?= ?\?/i.test(sqlVar(c)), h:'WHERE email = ?'},
+    {n:'Creates a PreparedStatement from sql', t:has(/PreparedStatement \w+ ?= ?\w+\.prepareStatement\( ?sql ?\)/), h:'PreparedStatement ps = connection.prepareStatement(sql)'},
+    {n:'No plain Statement left', t:not(/createStatement/), h:'Remove createStatement(). It\'s the unsafe kind.'},
+    {n:'Fills blank #1 with the email', t:has(/\.setString\( ?1 ?, ?email ?\)/), h:'ps.setString(1, email); Indexes start at 1.'},
+    {n:'Runs executeQuery() with no argument', t:c => /\.executeQuery\( ?\)/.test(c) && !/\.executeQuery\( ?sql ?\)/.test(c), h:'A PreparedStatement already has its SQL. Call executeQuery() empty.'}],
+  out:["findByEmail(\"priya@gmail.com\")  → Optional[Student{id=2, name='Priya'}]", "findByEmail(\"' OR '1'='1\")      → Optional.empty  ✓ attack blocked"],
+  solution:`public Optional<Student> findByEmail(String email) {
+    String sql = "SELECT id, name, email, age FROM students WHERE email = ?";
+    try (Connection connection = DriverManager.getConnection(URL, USERNAME, PASSWORD);
+         PreparedStatement ps = connection.prepareStatement(sql)) {
+        ps.setString(1, email);
+        try (ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) return Optional.of(mapRow(rs));
+            return Optional.empty();
+        }
+    } catch (SQLException e) {
+        throw new RuntimeException("Failed to fetch " + email, e);
+    }
+}`},
+
+{ id:'1-10', title:'Four blanks, right order', kind:'java', xp:25, file:'StudentRepository.java',
+  body:`<p>Blanks are numbered left to right, starting at <b>1</b>. In an UPDATE, the <code>WHERE id = ?</code> blank comes last.</p>
+<pre>UPDATE students SET name = ?, email = ?, age = ? WHERE id = ?
+                     <span class="tc">1          2        3              4</span></pre>
+<p>Get the order wrong and it still compiles. You just write the email into the name column. Return <code>executeUpdate()</code>'s count: <b>1</b> = updated, <b>0</b> = no such student.</p>
+<div class="ana">Don't call <code>findById()</code> first "to check". That's an extra trip, and the row can change in between. Just run the UPDATE and read the count.</div>`,
+  task:{t:'Fill all four blanks', items:['1 → name, 2 → email, 3 → age (may be null), 4 → id.','Use <code>setObject</code> for the age so null works.']},
+  starter:`public int update(Long id, Student student) {
+    String sql = "UPDATE students SET name = ?, email = ?, age = ? WHERE id = ?";
+    try (Connection connection = DriverManager.getConnection(URL, USERNAME, PASSWORD);
+         PreparedStatement ps = connection.prepareStatement(sql)) {
+
+        // TODO: fill the four blanks
+
+        return ps.executeUpdate();
+    } catch (SQLException e) {
+        throw new RuntimeException("Failed to update student with ID " + id, e);
+    }
+}`,
+  tests:[
+    {n:'Blank 1 = name', t:has(/\.setString\( ?1 ?, ?student\.getName\(\) ?\)/), h:'ps.setString(1, student.getName());'},
+    {n:'Blank 2 = email', t:has(/\.setString\( ?2 ?, ?student\.getEmail\(\) ?\)/), h:'ps.setString(2, student.getEmail());'},
+    {n:'Blank 3 = age, null-safe', t:has(/\.setObject\( ?3 ?, ?student\.getAge\(\) ?\)/), h:'ps.setObject(3, student.getAge()); setInt would crash on a null age.'},
+    {n:'Blank 4 = id', t:has(/\.setLong\( ?4 ?, ?id ?\)/), h:'ps.setLong(4, id); The WHERE blank is last.'},
+    {n:'No blank numbered 0', t:not(/\.set\w+\( ?0 ?,/), h:'JDBC counts from 1, not 0.'}],
+  out:['update(1L, new Student("Rahul Sharma", "rahul.sharma@gmail.com", 25)) → 1','update(99L, ...) → 0  (no such student)'],
+  solution:`public int update(Long id, Student student) {
+    String sql = "UPDATE students SET name = ?, email = ?, age = ? WHERE id = ?";
+    try (Connection connection = DriverManager.getConnection(URL, USERNAME, PASSWORD);
+         PreparedStatement ps = connection.prepareStatement(sql)) {
+        ps.setString(1, student.getName());
+        ps.setString(2, student.getEmail());
+        ps.setObject(3, student.getAge());
+        ps.setLong(4, id);
+        return ps.executeUpdate();
+    } catch (SQLException e) {
+        throw new RuntimeException("Failed to update student with ID " + id, e);
+    }
+}`},
+
+{ id:'1-11', title:'Hang up properly', kind:'quiz', xp:10,
+  body:`<p>The three objects nest like boxes: the <b>Connection</b> creates the <b>PreparedStatement</b>, which creates the <b>ResultSet</b>. Close inner first:</p>
+<pre>ResultSet → PreparedStatement → Connection</pre>
+<p>try-with-resources does this for you, in reverse order of declaration, even when an exception is thrown. The old way was a <code>finally</code> block with three null checks and three nested try/catch blocks.</p>
+<p>Forget to close and you leak connections. Eventually MySQL says <b>"Too many connections"</b>.</p>
+<p class="deep">Deep dive: <a href="${LAB1}#close" target="_blank" rel="noopener">nesting-box animation</a>.</p>`,
+  qs:[
+    {q:'In what order should JDBC resources be closed?', o:['Connection → Statement → ResultSet','ResultSet → Statement → Connection','Any order','Only the Connection matters'], a:1, ex:'Reverse of creation. Each depends on its parent.'},
+    {q:'What does try-with-resources do with resources declared as (A; B; C)?', o:['Closes A, B, C','Closes C, B, A','Closes only C','Nothing unless you call close()'], a:1, ex:'Reverse declaration order, automatically.'},
+    {q:'In this plain raw JDBC project (no pool), what does <code>connection.close()</code> do?', o:['Returns it to a pool','Closes the real connection to MySQL','Nothing','Commits and keeps it open'], a:1, ex:'With a pool (chapter 2), close() returns it to the pool instead.'}]},
+
+{ id:'1-12', title:'Local quests R1–R8', kind:'local', xp:60,
+  body:`<p>Time for real Java. A Maven project with <b>real JUnit tests</b> is waiting in your workspace:</p>
+<pre>claude-code-workspace/spring/jdbc-practice</pre>
+<p>It uses <b>H2</b>, an in-memory database in MySQL mode, so the tests don't need your MySQL server.</p>
+<dl class="map"><dt>R1–R2</dt><dd>save(), saveAndReturnId()</dd><dt>R3–R5</dt><dd>mapRow(), findById(), findAll()</dd><dt>R6</dt><dd>update(), deleteById()</dd><dt>R7</dt><dd>findByEmail(): the tests attack it with <code>' OR '1'='1</code></dd><dt>R8</dt><dd>findAllSortedBy(): allow-list for column names</dd></dl>
+<div class="warn">The tests also drop the table mid-test to check that a broken database <b>throws</b> instead of pretending "not found".</div>`,
+  local:{steps:['IntelliJ → File → Open → choose <code>spring/jdbc-practice</code>.','Open <code>src/main/java/.../raw/RawStudentRepository.java</code>. Each method says which quest it is.','Run <code>RawStudentRepositoryTest</code> (green ▶ in the gutter), or in a terminal: <code>mvn test -Dtest=RawStudentRepositoryTest</code>.','Make all 16 tests green.'], confirm:'All 16 RawStudentRepositoryTest tests pass on my machine'}},
+
+{ id:'1-boss', title:'Boss: Raw JDBC', kind:'boss', xp:60,
+  body:`<p>Five questions. All must be right to clear the chapter. No hints. Answer from memory, then check.</p>`,
+  qs:[
+    {q:'Which is true about the JDBC API vs the driver?', o:['The API is MySQL-specific','The driver implements the API\'s interfaces for one database','DBeaver is the driver','They are the same thing'], a:1, ex:'Your code uses interfaces; the driver supplies the implementation.'},
+    {q:'Why is PreparedStatement preferred over gluing strings?', o:['It\'s faster to type','Values are sent separately, so they can\'t become SQL','It skips the network','It closes itself'], a:1, ex:'Also fixes quotes in names, NULLs and type formatting.'},
+    {q:'Can <code>ORDER BY ?</code> take a column name chosen by the user?', o:['Yes, that\'s what ? is for','No. ? only works for values; use an allow-list for column names','Only with setString','Only in MySQL 8'], a:1, ex:'Placeholders protect values, not identifiers.'},
+    {q:'findById() catches SQLException and returns Optional.empty(). What\'s wrong?', o:['Nothing','A broken database now looks like "student not found"','Optional can\'t be empty','It should return null'], a:1, ex:'Rethrow failures; only "no row" means empty.'},
+    {q:'<code>executeUpdate()</code> for an INSERT of one row normally returns…', o:['0','1','true','The new id'], a:1, ex:'The affected-row count. Use RETURN_GENERATED_KEYS for the id.'}]}
+]},
+
+{ id:'c2', title:'Chapter 2 · Spring JDBC', lessons:[
+
+{ id:'2-1', title:'The kitchen staff arrive', kind:'quiz', xp:10,
+  body:`<div class="ana">Raw JDBC is cooking alone: fetch the pan, cook, wash up, deal with every alarm yourself, for every dish. Spring JDBC gives you kitchen staff. You hand over the recipe, the ingredients and how to plate. They do the rest.</div>
+<p>Every database call follows the same steps. Spring runs the ones that never change (<b>Template Method</b> idea) in a class called <code>JdbcTemplate</code>:</p>
+<dl class="map"><dt>Spring does</dt><dd>get connection · create statement · bind values · execute · loop rows · close · translate exceptions</dd><dt>You do</dt><dd>write SQL · give values in order · map a row to an object · decide what the result means</dd></dl>
+<pre><span class="tc">// raw JDBC: ~17 lines.  JdbcTemplate:</span>
+<span class="tk">int</span> rows = jdbcTemplate.update(sql, student.getName(), student.getEmail(), student.getAge());</pre>
+<p class="deep">Deep dive: <a href="${LAB2}#problem" target="_blank" rel="noopener">before/after code highlighter</a>.</p>`,
+  qs:[
+    {q:'With JdbcTemplate, who writes the SQL?', o:['Spring generates it','You do','Hibernate','The driver'], a:1, ex:'Spring JDBC keeps SQL fully under your control. That\'s its point.'},
+    {q:'Who closes the PreparedStatement?', o:['You, in try-with-resources','JdbcTemplate','Nobody','The garbage collector only'], a:1, ex:'Statement and connection cleanup is Spring\'s job now.'},
+    {q:'Does Spring JDBC stop using Connection, PreparedStatement and ResultSet?', o:['Yes, it replaces JDBC','No, it uses them internally and manages them for you','Only ResultSet','Only on MySQL'], a:1, ex:'Spring JDBC is a layer on top of plain JDBC.'}]},
+
+{ id:'2-2', title:'DataSource & the pan rack', kind:'quiz', xp:15,
+  body:`<p>A <b>DataSource</b> (<code>javax.sql.DataSource</code>) is a door you ask for connections: <code>getConnection()</code>. Your repository no longer knows the URL or password.</p>
+<p>A <b>connection pool</b> is a rack of reusable connections. Opening a real connection is slow (network + login), so the pool opens a few once and lends them out.</p>
+<pre>getConnection()  → borrow a pan from the rack
+connection.close() → put it back (not destroyed!)
+all pans busy    → wait … give up after connection-timeout</pre>
+<p><b>HikariCP</b> is the pool Spring Boot uses by default. <code>HikariDataSource</code> is a DataSource that pools.</p>
+<div class="warn">DataSource ≠ pool. It's an interface. A pool is one possible implementation.</div>
+<p class="deep">Play with it: <a href="${LAB2}#pool" target="_blank" rel="noopener">live pool simulator</a>.</p>`,
+  qs:[
+    {q:'Is a DataSource the same as a connection pool?', o:['Yes, always','No. It\'s an interface; a pool like HikariDataSource can implement it','No, a DataSource is one connection','Only in Spring Boot'], a:1, ex:'Some DataSources open a fresh connection every call.'},
+    {q:'With a pool, <code>connection.close()</code> usually…', o:['Destroys the connection','Returns it to the pool for reuse','Throws','Commits the database'], a:1, ex:'The pool intercepts close().'},
+    {q:'maximum-pool-size is 3 and all 3 are busy. A 4th request arrives. What happens?', o:['A 4th connection is created','It fails immediately','It waits for one to come back, up to connection-timeout, then errors','It shares connection 1'], a:2, ex:'Limiting connections protects the database.'},
+    {q:'Doubling the pool size always makes the app faster.', o:['True','False'], a:1, ex:'Each connection costs DB resources. Size from concurrency, query time, DB capacity and load tests.'}]},
+
+{ id:'2-3', title:'Configure Spring Boot', kind:'java', lang:'properties', xp:20, file:'application.properties',
+  body:`<p>Add <code>spring-boot-starter-jdbc</code> and <code>mysql-connector-j</code>. Spring Boot then:</p>
+<ol><li>finds Spring JDBC and the driver on the classpath,</li><li>reads <code>spring.datasource.*</code>,</li><li>prefers HikariCP and builds a <code>HikariDataSource</code>,</li><li>registers it as a bean, then builds a <code>JdbcTemplate</code> from it.</li></ol>
+<p>Pool settings live under <code>spring.datasource.hikari.*</code>. Times are in <b>milliseconds</b>.</p>
+<dl class="map"><dt>maximum-pool-size</dt><dd>most connections at once</dd><dt>minimum-idle</dt><dd>spare ones kept ready</dd><dt>connection-timeout</dt><dd>max wait for one (default 30000 = 30 s)</dd><dt>idle-timeout</dt><dd>unused ones removed after</dd><dt>max-lifetime</dt><dd>oldest a connection may get</dd></dl>`,
+  task:{t:'Point Boot at your database', items:['Set the URL for <code>student_db</code> on localhost, MySQL\'s default port.','Allow at most <b>10</b> connections.','Wait at most <b>30 seconds</b> for a connection.']},
+  starter:`# TODO: student_db on localhost, default MySQL port
+spring.datasource.url=
+spring.datasource.username=root
+spring.datasource.password=your_password
+
+# TODO: at most 10 connections, wait at most 30 seconds for one
+`,
+  tests:[
+    {n:'spring.datasource.url is correct', t:has(/spring\.datasource\.url ?= ?jdbc:mysql:\/\/localhost:3306\/student_db/), h:'spring.datasource.url=jdbc:mysql://localhost:3306/student_db'},
+    {n:'Username and password are set', t:c => /spring\.datasource\.username ?= ?\S/.test(c) && /spring\.datasource\.password ?= ?\S/.test(c), h:'Keep both lines with a value.'},
+    {n:'Pool max is 10', t:has(/spring\.datasource\.hikari\.maximum-pool-size ?= ?10\b/), h:'spring.datasource.hikari.maximum-pool-size=10'},
+    {n:'Timeout is 30 seconds', t:has(/spring\.datasource\.hikari\.connection-timeout ?= ?30000\b/), h:'Milliseconds! 30 seconds = 30000.'}],
+  out:['HikariPool-1 - Starting...','HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@5f2c1a','HikariPool-1 - Start completed.'],
+  solution:`spring.datasource.url=jdbc:mysql://localhost:3306/student_db
+spring.datasource.username=root
+spring.datasource.password=your_password
+
+spring.datasource.hikari.maximum-pool-size=10
+spring.datasource.hikari.connection-timeout=30000`},
+
+{ id:'2-4', title:'save() in one line', kind:'java', xp:25, file:'StudentRepository.java',
+  body:`<p><code>jdbcTemplate.update(sql, args...)</code> runs INSERT, UPDATE or DELETE and returns the affected-row count. The values after <code>sql</code> fill the <code>?</code> blanks <b>in order</b>.</p>
+<pre>jdbcTemplate.update(sql, student.getName(), student.getEmail(), student.getAge());
+<span class="tc">//                         1st ?             2nd ?              3rd ?</span></pre>
+<p>Gone: <code>DriverManager</code>, <code>PreparedStatement</code>, each <code>setXxx()</code>, try-with-resources, the <code>SQLException</code> catch.</p>
+<div class="warn">Wrong order still compiles: <code>update(sql, age, name, email)</code> writes the age into the name column.</div>`,
+  task:{t:'Delete the boilerplate', items:['Replace the whole try block with one <code>jdbcTemplate.update(...)</code> call.','Values in the order of the blanks.','Return <code>true</code> when exactly one row was inserted.']},
+  starter:`public boolean save(Student student) {
+    String sql = "INSERT INTO students(name, email, age) VALUES (?, ?, ?)";
+    try (Connection connection = DriverManager.getConnection(URL, USERNAME, PASSWORD);
+         PreparedStatement ps = connection.prepareStatement(sql)) {
+        ps.setString(1, student.getName());
+        ps.setString(2, student.getEmail());
+        ps.setObject(3, student.getAge());
+        int rowsAffected = ps.executeUpdate();
+        return rowsAffected == 1;
+    } catch (SQLException exception) {
+        exception.printStackTrace();
+        return false;
+    }
+}`,
+  tests:[
+    {n:'Calls jdbcTemplate.update with values in order', t:has(/jdbcTemplate\.update\( ?sql ?, ?student\.getName\(\) ?, ?student\.getEmail\(\) ?, ?student\.getAge\(\) ?\)/), h:'jdbcTemplate.update(sql, student.getName(), student.getEmail(), student.getAge())'},
+    {n:'Returns true for exactly one row', t:has(/== ?1/), h:'Compare the returned count with 1.'},
+    {n:'No DriverManager / PreparedStatement left', t:not(/DriverManager|PreparedStatement|\.set(String|Object|Int)\(/), h:'JdbcTemplate does connections, statements and binding now.'},
+    {n:'No SQLException handling left', t:not(/SQLException|try ?\(/), h:'JdbcTemplate translates SQLException for you.'},
+    {n:'SQL still uses ? blanks', t:c => /VALUES ?\( ?\? ?, ?\? ?, ?\? ?\)/i.test(sqlVar(c)), h:'Keep the SQL with three ?.'}],
+  out:['save(new Student("Rahul", "rahul@gmail.com", 24)) → true'],
+  solution:`public boolean save(Student student) {
+    String sql = "INSERT INTO students(name, email, age) VALUES (?, ?, ?)";
+    int rowsAffected = jdbcTemplate.update(sql,
+            student.getName(), student.getEmail(), student.getAge());
+    return rowsAffected == 1;
+}`},
+
+{ id:'2-5', title:'Write a RowMapper', kind:'java', xp:30, file:'StudentRepository.java',
+  body:`<div class="ana">A RowMapper is "how to plate one portion". You describe one row → one Student. Spring loops through the rows and calls it once per row.</div>
+<p><code>RowMapper&lt;T&gt;</code> has a single method, <code>T mapRow(ResultSet rs, int rowNumber)</code>, so a lambda works:</p>
+<pre>(rs, rowNumber) -&gt; new Student(...)</pre>
+<p>The mapper never calls <code>rs.next()</code>. Spring moves the cursor. It keeps no changing state, so you can store one instance in a field and reuse it.</p>
+<p>Alternative: <code>new BeanPropertyRowMapper&lt;&gt;(Student.class)</code> matches columns to setters by name (<code>first_name</code> → <code>firstName</code>). Less code, less control, and mismatches fail quietly.</p>`,
+  task:{t:'Map one row', items:['Assign a lambda <code>(rs, rowNumber) -&gt; new Student(...)</code>.','Read <code>id</code>, <code>name</code>, <code>email</code>, <code>age</code> by column name.','Keep an empty age as <code>null</code>.']},
+  starter:`private final RowMapper<Student> studentRowMapper =
+        // TODO: (rs, rowNumber) -> new Student(id, name, email, age)
+        null;`,
+  tests:[
+    {n:'Is a lambda (rs, rowNumber) -> new Student(...)', t:has(/RowMapper<Student> studentRowMapper ?= ?\( ?\w+ ?, ?\w+ ?\) ?-> ?new Student\(/), h:'= (rs, rowNumber) -> new Student( ... );'},
+    {n:'Reads id with getLong', t:has(/\w+\.getLong\( ?"id" ?\)/), h:'rs.getLong("id")'},
+    {n:'Reads name and email with getString', t:c => /\w+\.getString\( ?"name" ?\)/.test(c) && /\w+\.getString\( ?"email" ?\)/.test(c), h:'rs.getString("name"), rs.getString("email")'},
+    {n:'Age stays null when empty', t:has(/\w+\.getObject\( ?"age" ?, ?Integer\.class ?\)/), h:'rs.getObject("age", Integer.class). getInt would turn NULL into 0.'},
+    {n:'Never calls next()', t:not(/\.next\(\)/), h:'Spring moves the cursor; the mapper handles the current row only.'},
+    {n:'Not null any more', t:not(/= ?null ?;/), h:'Replace the null with your lambda.'}],
+  out:['query(sql, studentRowMapper) → mapRow called 5 times → List of 5 Students'],
+  solution:`private final RowMapper<Student> studentRowMapper =
+        (rs, rowNumber) -> new Student(
+                rs.getLong("id"),
+                rs.getString("name"),
+                rs.getString("email"),
+                rs.getObject("age", Integer.class));`},
+
+{ id:'2-6', title:'query or queryForObject?', kind:'quiz', xp:15,
+  body:`<dl class="map"><dt><code>update()</code></dt><dd>changes data → int count</dd><dt><code>query()</code></dt><dd>0, 1 or many rows → <code>List</code>, <b>empty</b> when nothing matches</dd><dt><code>queryForObject()</code></dt><dd>exactly one row → the object, or an <b>exception</b></dd></dl>
+<pre>              0 rows                         1 row      3 rows
+update()      0                              1          3
+query()       []                             [S1]       [S1, S2, S3]
+queryForObj   EmptyResultDataAccessException S1         IncorrectResultSizeDataAccessException</pre>
+<p class="deep">Tap through it: <a href="${LAB2}#methods" target="_blank" rel="noopener">3×3 explorer</a>.</p>`,
+  qs:[
+    {q:'<code>queryForObject()</code> with a WHERE that matches no rows returns…', o:['null','An empty Optional','It throws EmptyResultDataAccessException','An empty list'], a:2, ex:'It never returns null for "not found".'},
+    {q:'<code>query()</code> with no matching rows returns…', o:['null','An empty list','It throws','A list with one null'], a:1, ex:'Safe to loop over immediately.'},
+    {q:'Which method for <code>DELETE FROM students WHERE id = ?</code>?', o:['query()','queryForObject()','update()','execute()'], a:2, ex:'update() covers INSERT, UPDATE and DELETE.'}]},
+
+{ id:'2-7', title:'findById done right', kind:'java', xp:30, file:'StudentRepository.java',
+  body:`<p>Use <code>queryForObject()</code> for a primary-key lookup, and turn <i>only</i> "zero rows" into <code>Optional.empty()</code>.</p>
+<div class="warn"><b>The gotcha:</b> catching <code>DataAccessException</code> (the parent of every Spring database exception) also catches "database is down" and "SQL is broken". Your API then answers "404 student not found" during an outage.</div>
+<pre><span class="tk">catch</span> (EmptyResultDataAccessException e) { <span class="tk">return</span> Optional.empty(); }  <span class="tc">// ✓ only "no row"</span>
+<span class="tk">catch</span> (DataAccessException e)            { <span class="tk">return</span> Optional.empty(); }  <span class="tc">// ✗ hides outages</span></pre>`,
+  task:{t:'Honest Optional', items:['Call <code>jdbcTemplate.queryForObject(sql, studentRowMapper, id)</code>.','Wrap the result in <code>Optional.of(...)</code>.','Catch <b>only</b> <code>EmptyResultDataAccessException</code> → <code>Optional.empty()</code>.']},
+  starter:`public Optional<Student> findById(Long id) {
+    String sql = "SELECT id, name, email, age FROM students WHERE id = ?";
+    // TODO: queryForObject, Optional.empty() ONLY when there is no row
+}`,
+  tests:[
+    {n:'Uses queryForObject(sql, studentRowMapper, id)', t:has(/jdbcTemplate\.queryForObject\( ?sql ?, ?studentRowMapper ?, ?id ?\)/), h:'jdbcTemplate.queryForObject(sql, studentRowMapper, id)'},
+    {n:'Wraps the student in Optional.of', t:has(/Optional\.of(Nullable)?\(/), h:'return Optional.of(student);'},
+    {n:'Catches EmptyResultDataAccessException', t:has(/catch ?\( ?EmptyResultDataAccessException \w+ ?\)/), h:'catch (EmptyResultDataAccessException e)'},
+    {n:'Does not catch anything broader', t:not(/catch ?\( ?(DataAccessException|Exception|RuntimeException|Throwable) /), h:'A broad catch turns outages into "not found".'},
+    {n:'Returns Optional.empty() for no row', t:has(/return Optional\.empty\(\) ?;/), h:'return Optional.empty(); inside the catch.'}],
+  out:['findById(2L)  → Optional[Student{id=2, name=\'Priya\'}]','findById(99L) → Optional.empty','database down → CannotGetJdbcConnectionException  ✓ propagates'],
+  solution:`public Optional<Student> findById(Long id) {
+    String sql = "SELECT id, name, email, age FROM students WHERE id = ?";
+    try {
+        Student student = jdbcTemplate.queryForObject(sql, studentRowMapper, id);
+        return Optional.of(student);
+    } catch (EmptyResultDataAccessException e) {
+        return Optional.empty();
+    }
+}`},
+
+{ id:'2-8', title:'SQL for a single number', kind:'sql', xp:20,
+  body:`<p>Sometimes you need one number, not objects: "how many students are 24 or older?" In Spring you'd write:</p>
+<pre><span class="tk">int</span> n = jdbcTemplate.queryForObject(
+        <span class="ts">"SELECT COUNT(*) FROM students WHERE age >= ?"</span>, Integer.class, 24);</pre>
+<p>Passing <code>Integer.class</code> instead of a RowMapper tells Spring to map the single column itself. This is local quest <b>S7</b>.</p>
+<p>Write the SQL here with the real value. Think about Aman (age <code>NULL</code>): does he count?</p>`,
+  task:{t:'Count the 24+ crowd', items:['Return a single number: students with age 24 or more.']},
+  starter:`SELECT * FROM students;`,
+  expect:'SELECT COUNT(*) FROM students WHERE age >= 24', ordered:true, matchCols:false,
+  solution:`SELECT COUNT(*) FROM students WHERE age >= 24;`},
+
+{ id:'2-9', title:'Labelled alarms', kind:'quiz', xp:15,
+  body:`<p>Raw JDBC throws <code>SQLException</code> for everything. It's <b>checked</b> (must catch or declare) and vague: you'd dig through vendor codes like MySQL's 1062.</p>
+<p>JdbcTemplate catches it and throws an <b>unchecked</b> <code>DataAccessException</code> subtype that says what happened, and it's the same name on MySQL or PostgreSQL:</p>
+<dl class="map"><dt>DuplicateKeyException</dt><dd>UNIQUE / primary key violated (same email twice)</dd><dt>DataIntegrityViolationException</dt><dd>foreign key, NOT NULL, check constraint</dd><dt>BadSqlGrammarException</dt><dd>typo in SQL, unknown column</dd><dt>CannotGetJdbcConnectionException</dt><dd>server down, wrong password, pool timeout</dd><dt>EmptyResultDataAccessException</dt><dd>expected a row, got none</dd><dt>IncorrectResultSizeDataAccessException</dt><dd>expected one, got several</dd></dl>
+<p class="deep">Flip databases: <a href="${LAB2}#errors" target="_blank" rel="noopener">error translator</a>.</p>`,
+  qs:[
+    {q:'Inserting an email that already exists (email is UNIQUE) gives…', o:['BadSqlGrammarException','DuplicateKeyException','EmptyResultDataAccessException','CannotGetJdbcConnectionException'], a:1, ex:'A specific kind of DataIntegrityViolationException.'},
+    {q:'MySQL is stopped. JdbcTemplate throws…', o:['DuplicateKeyException','SQLException','CannotGetJdbcConnectionException','Nothing; it returns empty'], a:2, ex:'Same if the password is wrong or the pool times out.'},
+    {q:'Why can repository methods skip <code>throws SQLException</code> with JdbcTemplate?', o:['Spring ignores errors','DataAccessException is unchecked','Spring catches and logs everything','SQLException was removed'], a:1, ex:'Failures still propagate, just without forced try/catch.'},
+    {q:'You move from MySQL to PostgreSQL. What happens to your <code>catch (DuplicateKeyException e)</code>?', o:['Must be rewritten with Postgres codes','Keeps working; Spring translates both','Stops compiling','Catches everything now'], a:1, ex:'That\'s the portability win of exception translation.'}]},
+
+{ id:'2-10', title:'Turn alarms into meaning', kind:'java', xp:30, file:'StudentRepository.java',
+  body:`<p>A duplicate email isn't a crash. It's a normal user mistake. Turn Spring's database alarm into an exception your app understands:</p>
+<pre><span class="tk">try</span> {
+    ...
+} <span class="tk">catch</span> (DuplicateKeyException e) {
+    <span class="tk">throw new</span> EmailAlreadyExistsException(student.getEmail());
+}</pre>
+<p>Everything else (server down, bad SQL) can keep propagating to one central error handler. Don't catch what you can't handle.</p>`,
+  task:{t:'Friendly duplicate error', items:['Keep the <code>jdbcTemplate.update(...)</code> call.','Catch <code>DuplicateKeyException</code> only.','Throw <code>new EmailAlreadyExistsException(student.getEmail())</code>.']},
+  starter:`public boolean save(Student student) {
+    String sql = "INSERT INTO students(name, email, age) VALUES (?, ?, ?)";
+    // TODO: same email twice should become EmailAlreadyExistsException
+    return jdbcTemplate.update(sql,
+            student.getName(), student.getEmail(), student.getAge()) == 1;
+}`,
+  tests:[
+    {n:'Still saves with jdbcTemplate.update', t:has(/jdbcTemplate\.update\( ?sql ?, ?student\.getName\(\) ?, ?student\.getEmail\(\) ?, ?student\.getAge\(\) ?\)/), h:'Keep the update call inside the try.'},
+    {n:'Wrapped in try', t:has(/try ?\{/), h:'try { return jdbcTemplate.update(...) == 1; }'},
+    {n:'Catches DuplicateKeyException', t:has(/catch ?\( ?DuplicateKeyException \w+ ?\)/), h:'catch (DuplicateKeyException e)'},
+    {n:'Throws EmailAlreadyExistsException with the email', t:has(/throw new EmailAlreadyExistsException\( ?student\.getEmail\(\) ?\)/), h:'throw new EmailAlreadyExistsException(student.getEmail());'},
+    {n:'Doesn\'t swallow other failures', t:not(/catch ?\( ?(DataAccessException|Exception|RuntimeException) /), h:'Catch only the duplicate case.'}],
+  out:['save(rahul) → true','save(rahul again) → EmailAlreadyExistsException: A student with email rahul@gmail.com already exists'],
+  solution:`public boolean save(Student student) {
+    String sql = "INSERT INTO students(name, email, age) VALUES (?, ?, ?)";
+    try {
+        return jdbcTemplate.update(sql,
+                student.getName(), student.getEmail(), student.getAge()) == 1;
+    } catch (DuplicateKeyException e) {
+        throw new EmailAlreadyExistsException(student.getEmail());
+    }
+}`},
+
+{ id:'2-11', title:'Local quests S1–S7', kind:'local', xp:60,
+  body:`<p>Same project, chapter 2. Now feel how much shorter everything gets.</p>
+<dl class="map"><dt>S1</dt><dd>StudentRowMapper (null-safe age)</dd><dt>S2–S3</dt><dd>save(), findAll()</dd><dt>S4</dt><dd>findById(): the tests drop the table and expect an exception</dd><dt>S5</dt><dd>update(), deleteById()</dd><dt>S6</dt><dd>duplicate email → EmailAlreadyExistsException</dd><dt>S7</dt><dd>countByMinAge() with <code>Integer.class</code></dd></dl>
+<p>The tests build a <code>JdbcTemplate</code> on an H2 DataSource. In a Boot app it would be the HikariCP one from <code>application.properties</code>. Your repository code is identical either way.</p>`,
+  local:{steps:['Open <code>src/main/java/.../spring/StudentRowMapper.java</code> and <code>SpringStudentRepository.java</code>.','Run <code>SpringStudentRepositoryTest</code>, or <code>mvn test -Dtest=SpringStudentRepositoryTest</code>.','Make all 13 tests green.','Then run everything: <code>mvn test</code> → 29 tests.'], confirm:'All 13 SpringStudentRepositoryTest tests pass on my machine'}},
+
+{ id:'2-boss', title:'Boss: Spring JDBC', kind:'boss', xp:80,
+  body:`<p>Final boss. Five questions, all must be right. Answer from memory first.</p>`,
+  qs:[
+    {q:'What does Spring JDBC NOT do for you?', o:['Close the statement','Write your SQL','Translate SQLException','Get a connection'], a:1, ex:'SQL stays yours.'},
+    {q:'You write <code>new JdbcTemplate()</code> in your repository. What\'s wrong?', o:['Nothing','It has no DataSource; inject the one Boot configured','It\'s too slow','It\'s deprecated'], a:1, ex:'Boot builds a JdbcTemplate from the HikariDataSource. Inject it.'},
+    {q:'You need "all students older than 20". Which method?', o:['queryForObject()','update()','query()','execute()'], a:2, ex:'Any number of rows → query() → List.'},
+    {q:'BeanPropertyRowMapper needs what on Student?', o:['A builder','A no-arg constructor and setters','Only getters','@Entity'], a:1, ex:'It creates the object and calls setters matched by column name.'},
+    {q:'Pool size 3, 3 busy, connection-timeout passes and none came back. What does your code see?', o:['Optional.empty()','A 4th connection','CannotGetJdbcConnectionException','null'], a:2, ex:'The pool gives up and Spring translates the failure.'}]}
+]}];
+/* ================= ENGINE ================= */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const ALL = COURSE.flatMap(ch => ch.lessons.map(l => Object.assign(l, { chapter: ch })));
+const KEY = 'jdbc-quest-v1';
+const S = { done:{}, xp:0, fails:{}, code:{}, peeked:{}, unlockAll:false, cur:null };
+try { const raw = localStorage.getItem(KEY); if (raw) Object.assign(S, JSON.parse(raw)); } catch (e) {}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
+const KIND = { quiz:'QUIZ', sql:'SQL', java:'CODE', attack:'ATTACK', local:'LOCAL QUEST', boss:'BOSS' };
+
+let SQLJS = null, sqlErr = null;
+if (window.initSqlJs) initSqlJs().then(s => { SQLJS = s; if (cur() && ['sql','attack'].includes(cur().kind)) openLesson(cur().id); }).catch(e => sqlErr = e);
+else sqlErr = new Error('SQL engine script did not load');
+
+const idx = id => ALL.findIndex(l => l.id === id);
+const cur = () => ALL[idx(S.cur)] || ALL[0];
+const unlocked = i => i === 0 || S.unlockAll || S.done[ALL[i].id] || S.done[ALL[i - 1].id];
+
+/* ---------- top bar & sidebar ---------- */
+function renderTop() {
+  const lv = Math.floor(S.xp / 100) + 1, into = S.xp % 100;
+  $('#lv').textContent = 'Lv ' + lv;
+  $('#xpfill').style.width = into + '%';
+  $('#xptext').textContent = `${S.xp} XP · ${100 - into} to Lv ${lv + 1}`;
+  $('#donecount').textContent = ALL.filter(l => S.done[l.id]).length;
+  $('#total').textContent = ALL.length;
+}
+function renderSide() {
+  let n = 0;
+  $('#side').innerHTML = COURSE.map(ch => {
+    const d = ch.lessons.filter(l => S.done[l.id]).length;
+    return `<div class="chap"><h3><span>${esc(ch.title)}</span><span>${d}/${ch.lessons.length}</span></h3><ol>` +
+      ch.lessons.map(l => {
+        const i = idx(l.id), lock = !unlocked(i), num = l.kind === 'boss' ? 'B' : (++n);
+        return `<li><button type="button" class="li ${S.done[l.id] ? 'done' : ''} ${S.cur === l.id ? 'cur' : ''} ${lock ? 'locked' : ''} ${l.kind === 'boss' ? 'boss' : ''}" data-id="${l.id}" ${lock ? 'aria-disabled="true" title="Finish the previous lesson to unlock"' : ''}>
+          <span class="dot">${S.done[l.id] ? '✓' : num}</span><span>${esc(l.title)}</span><span class="k">${lock ? 'locked' : KIND[l.kind]}</span></button></li>`;
+      }).join('') + '</ol></div>';
+  }).join('') + `<div class="side-foot">
+      <label for="unlock-all"><input type="checkbox" id="unlock-all" ${S.unlockAll ? 'checked' : ''}> Unlock all lessons (review mode)</label>
+      <span id="restore-zone"><button class="tbtn" type="button" id="restore-btn">Restore my progress…</button></span>
+      <span>Labs: <a href="${LAB1}" target="_blank" rel="noopener">JDBC</a> · <a href="${LAB2}" target="_blank" rel="noopener">Spring JDBC</a></span>
+      <span>Local project: <code>spring/jdbc-practice</code></span>
+      <span id="reset-zone"><button class="tbtn" type="button" id="reset-btn">Reset progress</button></span>
+    </div>`;
+}
+$('#side').addEventListener('click', e => {
+  const b = e.target.closest('.li');
+  if (b) { if (b.classList.contains('locked')) return; openLesson(b.dataset.id); if (matchMedia('(max-width:820px)').matches) toggleMenu(false); return; }
+  if (e.target.id === 'reset-btn') {
+    $('#reset-zone').innerHTML = `<span class="confirm">Erase all XP and progress? <button class="tbtn" type="button" id="reset-yes">Erase</button><button class="tbtn" type="button" id="reset-no">Keep</button></span>`;
+  }
+  if (e.target.id === 'reset-yes') { Object.assign(S, { done:{}, xp:0, fails:{}, code:{}, peeked:{}, cur:ALL[0].id }); save(); refresh(); openLesson(ALL[0].id); }
+  if (e.target.id === 'reset-no') renderSide();
+  if (e.target.id === 'restore-btn') {
+    $('#restore-zone').innerHTML = `<span class="restore-box"><span class="row">I finished lessons 1 to <input type="number" id="restore-n" min="1" max="${ALL.length}" inputmode="numeric" aria-label="Last finished lesson number"></span><span id="restore-info" class="note">Type the number of the last lesson you finished.</span><span class="row"><button class="tbtn" type="button" id="restore-yes">Restore</button><button class="tbtn" type="button" id="restore-no">Cancel</button></span></span>`;
+    $('#restore-n').focus();
+  }
+  if (e.target.id === 'restore-no') renderSide();
+  if (e.target.id === 'restore-yes') {
+    const n = Math.min(ALL.length, parseInt($('#restore-n').value, 10) || 0);
+    if (n < 1) { $('#restore-info').textContent = `Enter a lesson number from 1 to ${ALL.length}.`; return; }
+    const { list, xp } = restoreInfo(n);
+    list.forEach(l => { S.done[l.id] = true; });
+    S.xp += xp; save(); refresh();
+    openLesson(ALL[Math.min(n, ALL.length - 1)].id);
+    if (matchMedia('(max-width:820px)').matches) toggleMenu(false);
+    const t = document.createElement('div'); t.className = 'toast'; t.textContent = xp ? `+${xp} XP restored` : 'Already up to date';
+    document.body.append(t); setTimeout(() => t.remove(), 1900);
+  }
+});
+// Lessons 1..n that are not done yet, and the XP they are worth. Existing XP is kept, never counted twice.
+function restoreInfo(n) {
+  const list = ALL.slice(0, n).filter(l => !S.done[l.id]);
+  return { list, xp: list.reduce((s, l) => s + l.xp, 0) };
+}
+$('#side').addEventListener('input', e => {
+  if (e.target.id !== 'restore-n') return;
+  const n = Math.min(ALL.length, parseInt(e.target.value, 10) || 0), out = $('#restore-info');
+  if (n < 1) { out.textContent = 'Type the number of the last lesson you finished.'; return; }
+  const { list, xp } = restoreInfo(n);
+  out.textContent = list.length ? `Marks ${list.length} lesson${list.length === 1 ? '' : 's'} as done and adds ${xp} XP. Lesson ${Math.min(n + 1, ALL.length)} unlocks.` : `Lessons 1 to ${n} are already done. Lesson ${Math.min(n + 1, ALL.length)} is unlocked.`;
+});
+$('#side').addEventListener('change', e => { if (e.target.id === 'unlock-all') { S.unlockAll = e.target.checked; save(); renderSide(); } });
+function toggleMenu(force) {
+  const open = force ?? !$('#side').classList.contains('open');
+  $('#side').classList.toggle('open', open); $('#menu-btn').setAttribute('aria-expanded', open);
+}
+$('#menu-btn').onclick = () => toggleMenu();
+function refresh() { renderTop(); renderSide(); }
+
+/* ---------- rewards ---------- */
+function award(l) {
+  if (S.done[l.id]) return 0;
+  const gained = Math.round(l.xp * (S.peeked[l.id] ? 0.5 : 1));
+  S.done[l.id] = true; S.xp += gained; save(); refresh();
+  const t = document.createElement('div'); t.className = 'toast'; t.textContent = `+${gained} XP`;
+  document.body.append(t); setTimeout(() => t.remove(), 1900);
+  return gained;
+}
+function nextBtn(l) {
+  const i = idx(l.id), nx = ALL[i + 1];
+  return nx ? `<button class="btn ok" type="button" data-next="${nx.id}">Next: ${esc(nx.title)} →</button>` : `<span>Course complete. Level ${Math.floor(S.xp / 100) + 1}!</span>`;
+}
+document.addEventListener('click', e => { const b = e.target.closest('[data-next]'); if (b) openLesson(b.dataset.next); });
+document.addEventListener('click', e => {
+  if (e.target.closest('#exit-focus')) {
+    document.body.classList.remove('focus');
+    e.target.closest('#exit-focus').remove();
+    const f = $('#ed-focus'); if (f) f.textContent = '⤢ Bigger editor';
+  }
+});
+
+/* ---------- lesson ---------- */
+function openLesson(id) {
+  const i = idx(id); if (i < 0 || !unlocked(i)) id = ALL.find((l, k) => unlocked(k) && !S.done[l.id])?.id || ALL[0].id;
+  S.cur = id; save();
+  const l = cur();
+  try { if (location.hash !== '#l' + id) history.replaceState(null, '', '#l' + id); } catch (e) {}
+  $('#lesson').innerHTML = `<span class="crumb">${esc(l.chapter.title)} · lesson ${idx(l.id) + 1} of ${ALL.length}</span><h1>${esc(l.title)}</h1><div class="body">${l.body}</div>`;
+  renderChallenge(l);
+  renderSide();
+  window.scrollTo({ top: 0 });
+}
+
+function head(l) {
+  return `<div class="chal-head"><span class="kind ${l.kind}">${KIND[l.kind]}</span><span class="reward">+${l.xp} XP</span>${S.done[l.id] ? '<span class="donechip">✓ completed</span>' : ''}${document.body.classList.contains('focus') ? '<button class="tbtn" type="button" id="exit-focus" style="margin-left:auto">⤡ Show lesson &amp; menu</button>' : ''}</div>`;
+}
+function taskBox(l) {
+  return l.task ? `<div class="task"><b class="t">${esc(l.task.t)}</b><ul>${l.task.items.map(x => `<li>${x}</li>`).join('')}</ul></div>` : '';
+}
+function renderChallenge(l) {
+  const c = $('#chal');
+  if (!['java', 'sql'].includes(l.kind)) document.body.classList.remove('focus');  // only editor lessons use the big-editor mode
+  if (l.kind === 'quiz' || l.kind === 'boss') return quiz(c, l);
+  if (l.kind === 'local') return local(c, l);
+  if (l.kind === 'attack') return attack(c, l);
+  return editor(c, l);
+}
+
+/* ---------- quiz ---------- */
+function quiz(c, l) {
+  const pick = {};
+  c.innerHTML = head(l) + `<div class="qz">${l.qs.map((q, i) => `<div class="qq" data-q="${i}"><div class="qt">${i + 1}. ${q.q}</div>${q.o.map((o, k) => `<button type="button" class="opt" data-k="${k}"><span class="l">${'ABCD'[k]}</span><span>${o}</span></button>`).join('')}<div class="ex" hidden></div></div>`).join('')}</div>
+    <div class="actions"><button class="btn go" type="button" id="q-sub">Submit answers</button><span class="hintk">${l.kind === 'boss' ? 'Boss rules: no explanations until you win.' : 'Pick one answer per question.'}</span></div><div id="q-res"></div>`;
+  c.querySelectorAll('.qq').forEach(qq => qq.addEventListener('click', e => {
+    const b = e.target.closest('.opt'); if (!b) return;
+    qq.querySelectorAll('.opt').forEach(o => o.classList.remove('sel', 'right', 'wrong'));
+    b.classList.add('sel'); pick[qq.dataset.q] = +b.dataset.k;
+  }));
+  $('#q-sub').onclick = () => {
+    if (Object.keys(pick).length < l.qs.length) { $('#q-res').innerHTML = `<div class="banner lose">Answer all ${l.qs.length} questions first.</div>`; return; }
+    let right = 0;
+    l.qs.forEach((q, i) => {
+      const qq = c.querySelector(`[data-q="${i}"]`), ok = pick[i] === q.a, ex = qq.querySelector('.ex');
+      qq.querySelectorAll('.opt').forEach(o => o.classList.remove('right', 'wrong'));
+      qq.querySelector(`[data-k="${pick[i]}"]`).classList.add(ok ? 'right' : 'wrong');
+      if (ok) right++;
+      if (l.kind !== 'boss') { ex.hidden = false; ex.innerHTML = (ok ? '✓ ' : '✗ ') + q.ex; }
+    });
+    if (right === l.qs.length) {
+      if (l.kind === 'boss') l.qs.forEach((q, i) => { const ex = c.querySelector(`[data-q="${i}"] .ex`); ex.hidden = false; ex.innerHTML = '✓ ' + q.ex; });
+      const g = award(l);
+      $('#q-res').innerHTML = `<div class="banner win"><span>All ${right} correct${g ? ` · +${g} XP` : ''}</span>${nextBtn(l)}</div>`;
+    } else {
+      S.fails[l.id] = (S.fails[l.id] || 0) + 1; save();
+      $('#q-res').innerHTML = `<div class="banner lose">${right} / ${l.qs.length} correct. ${l.kind === 'boss' ? 'Re-read the chapter and try again.' : 'Read the notes under the red ones and retry.'}</div>`;
+    }
+  };
+}
+
+/* ---------- local quest ---------- */
+function local(c, l) {
+  c.innerHTML = head(l) + `<div class="task"><b class="t">Do this on your machine</b><ol class="steps">${l.local.steps.map(s => `<li>${s}</li>`).join('')}</ol></div>
+    <div class="con"><div class="ch"><span>terminal</span><span>expected</span></div><div class="cb"><div class="info">$ mvn test -Dtest=${l.id === '1-12' ? 'RawStudentRepositoryTest' : 'SpringStudentRepositoryTest'}</div><div class="pass">[INFO] Tests run: ${l.id === '1-12' ? 16 : 13}, Failures: 0, Errors: 0, Skipped: 0</div><div class="pass">[INFO] BUILD SUCCESS</div></div></div>
+    <label class="check" for="lc"><input type="checkbox" id="lc" ${S.done[l.id] ? 'checked disabled' : ''}><span>${esc(l.local.confirm)}</span></label><div id="lc-res">${S.done[l.id] ? `<div class="banner win"><span>Quest cleared</span>${nextBtn(l)}</div>` : ''}</div>`;
+  $('#lc').onchange = e => { if (e.target.checked) { e.target.disabled = true; const g = award(l); $('#lc-res').innerHTML = `<div class="banner win"><span>Quest cleared · +${g} XP</span>${nextBtn(l)}</div>`; } };
+}
+
+/* ---------- SQL helpers ---------- */
+function freshDb() { const db = new SQLJS.Database(); db.run(SEED); return db; }
+// Always free the database afterwards. The in-browser engine has a fixed memory budget.
+function withDb(fn) { const db = freshDb(); try { return fn(db); } finally { try { db.close(); } catch (e) {} } }
+const sqlErrMsg = err => /Aborted|OOM|out of memory/i.test(err.message)
+  ? 'The in-browser database ran out of memory. Reload the page; your progress and code are saved.'
+  : 'SQL error: ' + err.message;
+function runAll(db, sql) {
+  const out = [];
+  for (const st of db.iterateStatements(sql)) {
+    const cols = st.getColumnNames();
+    if (cols.length) { const rows = []; while (st.step()) rows.push(st.get()); out.push({ sql: st.getSQL(), cols, rows }); }
+    else { st.step(); out.push({ sql: st.getSQL(), affected: db.getRowsModified() }); }
+  }
+  return out;
+}
+function table(r) {
+  return `<table><tr>${r.cols.map(h => `<th>${esc(h)}</th>`).join('')}</tr>${r.rows.slice(0, 50).map(row => `<tr>${row.map(v => v === null ? '<td class="null">NULL</td>' : `<td>${esc(v)}</td>`).join('')}</tr>`).join('')}</table><div class="info">${r.rows.length} row${r.rows.length === 1 ? '' : 's'}</div>`;
+}
+const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+
+/* ---------- normalizer for code checks ---------- */
+function normalize(code, lang) {
+  if (lang === 'properties') return code.split('\n').map(x => x.trim()).filter(x => x && !x.startsWith('#')).join(' ').replace(/\s+/g, ' ');
+  let out = '', buf = '', i = 0; const n = code.length;
+  const flush = () => { out += buf.replace(/\s+/g, ' ').replace(/ ?([()[\],;.{}]) ?/g, '$1'); buf = ''; };
+  while (i < n) {
+    const ch = code[i], nx = code[i + 1];
+    if (ch === '/' && nx === '/') { while (i < n && code[i] !== '\n') i++; buf += ' '; continue; }
+    if (ch === '/' && nx === '*') { i += 2; while (i < n && !(code[i] === '*' && code[i + 1] === '/')) i++; i += 2; buf += ' '; continue; }
+    if (ch === '"' || ch === "'") {
+      flush(); let j = i + 1;
+      while (j < n && code[j] !== ch && code[j] !== '\n') { if (code[j] === '\\') j++; j++; }
+      j++; out += code.slice(i, j).replace(/\s+/g, ' '); i = j; continue;
+    }
+    buf += ch; i++;
+  }
+  flush(); return out.trim();
+}
+
+/* ---------- editor challenge (java / properties / sql) ---------- */
+function editor(c, l) {
+  const isSql = l.kind === 'sql', code = S.code[l.id] ?? l.starter;
+  const fname = l.file || (isSql ? 'query.sql' : 'Main.java');
+  c.innerHTML = head(l) + taskBox(l) + `
+    <div class="ed${S.code[l.id] == null ? ' fresh' : ''}" id="ed"><div class="file"><span>${esc(fname)}<span class="edit-tip"> · ✎ YOUR CODE: click inside and replace the TODO lines</span></span><span class="ed-tools"><button class="tbtn" type="button" id="ed-focus">${document.body.classList.contains('focus') ? '⤡ Show lesson' : '⤢ Bigger editor'}</button><span id="ed-reset-zone"><button class="tbtn" type="button" id="ed-reset">Reset code</button></span></span></div>
+      <pre class="gut" id="gut" aria-hidden="true"></pre><textarea id="code" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="Code editor"></textarea></div>
+    <div class="actions">${isSql ? '<button class="btn" type="button" id="run">▶ Run</button>' : ''}<button class="btn go" type="button" id="submit">${isSql ? 'Submit' : 'Run tests'}</button>
+      <span id="sol-zone"></span><span class="hintk">Ctrl + Enter = ${isSql ? 'Run' : 'Run tests'}</span></div>
+    <div class="con" id="con"><div class="ch"><span>console</span><span>${isSql ? 'SQLite in your browser' : l.lang === 'properties' ? 'config checker' : 'Java checker · rules, not a compiler'}</span></div><div class="cb" id="cb"><div class="info">${isSql ? 'Press Run to execute. Submit checks your answer.' : 'Press Run tests. Each check gives a hint when it fails.'}</div></div></div>
+    <div id="res"></div>${!isSql && l.lang !== 'properties' ? '<p class="hintk">This checks the shape of your code. The local quests compile and run real Java tests.</p>' : ''}`;
+  const ta = $('#code'), gut = $('#gut');
+  ta.value = code;
+  const gutter = () => { gut.textContent = Array.from({ length: ta.value.split('\n').length }, (_, k) => k + 1).join('\n'); gut.scrollTop = ta.scrollTop; };
+  gutter();
+  ta.addEventListener('input', () => { S.code[l.id] = ta.value; save(); gutter(); $('#ed').classList.remove('fresh'); });
+  ta.addEventListener('scroll', () => gut.scrollTop = ta.scrollTop);
+  // VS Code-style editing: auto-close pairs, step over closers, smart Enter/Backspace, Tab/Shift+Tab.
+  const PAIRS = { '(': ')', '[': ']', '{': '}', '"': '"', "'": "'" };
+  const CLOSERS = new Set([')', ']', '}', '"', "'"]);
+  const put = (text, a, b, caret) => {   // execCommand keeps Ctrl+Z working
+    ta.setSelectionRange(a, b);
+    if (!document.execCommand('insertText', false, text)) { ta.setRangeText(text, a, b, 'end'); ta.dispatchEvent(new Event('input')); }
+    if (caret != null) ta.setSelectionRange(caret, caret);
+  };
+  ta.addEventListener('keydown', e => {
+    const s = ta.selectionStart, en = ta.selectionEnd, v = ta.value, prev = v[s - 1], next = v[s];
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); (isSql ? $('#run') : $('#submit')).click(); return; }
+    if (e.ctrlKey || e.metaKey || e.altKey || e.isComposing) return;
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      if (e.shiftKey) {
+        const ls = v.lastIndexOf('\n', s - 1) + 1, m = v.slice(ls, ls + 4).match(/^ {1,4}/);
+        if (m) { put('', ls, ls + m[0].length); ta.setSelectionRange(Math.max(ls, s - m[0].length), Math.max(ls, en - m[0].length)); }
+      } else put('    ', s, en);
+      return;
+    }
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const line = v.slice(0, s).split('\n').pop(), base = line.match(/^\s*/)[0], opens = /[{([]\s*$/.test(line), inner = base + (opens ? '    ' : '');
+      if (opens && s === en && /^[}\])]/.test(next || '')) put('\n' + inner + '\n' + base, s, en, s + 1 + inner.length);
+      else put('\n' + inner, s, en);
+      return;
+    }
+    if (e.key === 'Backspace' && s === en && s > 0 && PAIRS[prev] && PAIRS[prev] === next) { e.preventDefault(); put('', s - 1, s + 1); return; }
+    if (s === en && next === e.key && CLOSERS.has(e.key)) { e.preventDefault(); ta.setSelectionRange(s + 1, s + 1); return; }
+    if (PAIRS[e.key]) {
+      const quote = e.key === '"' || e.key === "'";
+      if (s !== en) { e.preventDefault(); put(e.key + v.slice(s, en) + PAIRS[e.key], s, en); ta.setSelectionRange(s + 1, en + 1); return; }
+      if (quote && /\w/.test(prev || '')) return;          // don't pair the apostrophe in "don't"
+      if (next && !/[\s)\]};,]/.test(next)) return;         // only pair before space, a closer or end of line
+      e.preventDefault(); put(e.key + PAIRS[e.key], s, en, s + 1);
+    }
+  });
+  const bindReset = () => {
+    $('#ed-reset').onclick = () => {
+      $('#ed-reset-zone').innerHTML = `<span class="confirm">Lose your edits? <button class="tbtn" type="button" id="er-yes">Reset</button><button class="tbtn" type="button" id="er-no">Keep</button></span>`;
+      $('#er-yes').onclick = () => { delete S.code[l.id]; save(); editor(c, l); };
+      $('#er-no').onclick = () => { $('#ed-reset-zone').innerHTML = '<button class="tbtn" type="button" id="ed-reset">Reset code</button>'; bindReset(); };
+    };
+  };
+  bindReset();
+  $('#ed-focus').onclick = () => {
+    const on = document.body.classList.toggle('focus');
+    $('#ed-focus').textContent = on ? '⤡ Show lesson' : '⤢ Bigger editor';
+    $('#exit-focus')?.remove();
+    if (on) $('.chal-head').insertAdjacentHTML('beforeend', '<button class="tbtn" type="button" id="exit-focus" style="margin-left:auto">⤡ Show lesson &amp; menu</button>');
+    ta.focus();
+  };
+  solZone(l);
+  const cb = $('#cb');
+  if (isSql) {
+    $('#run').onclick = () => {
+      if (!SQLJS) { cb.innerHTML = `<div class="fail">${sqlErr ? 'The SQL engine could not load. Check your connection and reload.' : 'SQL engine is still loading…'}</div>`; return; }
+      try {
+        const res = withDb(db => runAll(db, ta.value));
+        cb.innerHTML = res.length ? res.map(r => `<div class="info">› ${esc(r.sql.trim().slice(0, 90))}</div>` + (r.cols ? table(r) : `<div class="out">${r.affected} row${r.affected === 1 ? '' : 's'} affected <span class="info">(what executeUpdate() would return)</span></div>`)).join('') : '<div class="info">Nothing to run.</div>';
+      } catch (err) { cb.innerHTML = `<div class="fail">${esc(sqlErrMsg(err))}</div>`; }
+    };
+  }
+  $('#submit').onclick = () => isSql ? submitSql(l, ta.value, cb) : submitCode(l, ta.value, cb);
+}
+function solZone(l) {
+  const z = $('#sol-zone'); if (!z) return;
+  if ((S.fails[l.id] || 0) < 2 && !S.peeked[l.id]) { z.innerHTML = ''; return; }
+  z.innerHTML = `<button class="btn ghost" type="button" id="sol">Show solution</button>`;
+  $('#sol').onclick = () => {
+    z.innerHTML = `<span class="confirm">${S.done[l.id] || S.peeked[l.id] ? 'Show it?' : 'Reveal? This lesson then pays half XP.'} <button class="tbtn" type="button" id="sol-yes">Reveal</button><button class="tbtn" type="button" id="sol-no">Not yet</button></span>`;
+    $('#sol-no').onclick = () => solZone(l);
+    $('#sol-yes').onclick = () => {
+      if (!S.done[l.id]) { S.peeked[l.id] = true; save(); }
+      $('#res').innerHTML = `<div class="task"><b class="t">Solution</b><pre class="cpre">${esc(l.solution)}</pre><div class="actions"><button class="btn" type="button" id="sol-use">Put it in the editor</button><button class="btn ghost" type="button" id="sol-hide">✕ Hide solution</button></div></div>`;
+      $('#sol-use').onclick = () => { $('#code').value = l.solution; $('#code').dispatchEvent(new Event('input')); $('#res').innerHTML = ''; $('#code').focus(); $('#code').scrollIntoView({ block:'center' }); };
+      $('#sol-hide').onclick = () => { $('#res').innerHTML = ''; $('#code').focus(); };
+      solZone(l);
+    };
+  };
+}
+function fail(l) { S.fails[l.id] = (S.fails[l.id] || 0) + 1; save(); solZone(l); }
+function win(l, cb, extra) {
+  const g = award(l);
+  $('#res').innerHTML = `<div class="banner win"><span>All checks passed${g ? ` · +${g} XP` : ''}</span>${nextBtn(l)}</div>`;
+  if (extra) cb.innerHTML += extra;
+  const h = $('.chal-head'); if (h && !h.querySelector('.donechip')) h.insertAdjacentHTML('beforeend', '<span class="donechip">✓ completed</span>');
+}
+function submitCode(l, code, cb) {
+  const n = normalize(code, l.lang);
+  const results = l.tests.map(t => { let ok = false; try { ok = !!t.t(n); } catch (e) {} return { ...t, ok }; });
+  const passed = results.filter(r => r.ok).length;
+  cb.innerHTML = results.map(r => `<div class="${r.ok ? 'pass' : 'fail'}">${r.ok ? '✓' : '✗'} ${esc(r.n)}</div>${r.ok ? '' : `<div class="hint">hint: ${esc(r.h)}</div>`}`).join('') +
+    `<div class="info">${passed} / ${results.length} checks passed</div>`;
+  if (passed === results.length) win(l, cb, l.out ? `<div class="info" style="margin-top:6px">program output (simulated):</div>` + l.out.map(o => `<div class="out">${esc(o)}</div>`).join('') : '');
+  else { $('#res').innerHTML = `<div class="banner lose">${results.length - passed} check${results.length - passed === 1 ? '' : 's'} failing. Read the hints.</div>`; fail(l); }
+}
+function submitSql(l, sql, cb) {
+  if (!SQLJS) { cb.innerHTML = '<div class="fail">SQL engine is not ready yet.</div>'; return; }
+  let lines = [], ok = true, db = null;
+  try {
+    db = freshDb();
+    const res = runAll(db, sql);
+    if (l.expect) {
+      const mine = [...res].reverse().find(r => r.cols), want = withDb(d => runAll(d, l.expect)).pop();
+      if (!mine) { ok = false; lines.push(['fail', 'Your SQL has no SELECT result to check. End with a query.']); }
+      else {
+        const colsOk = mine.cols.length === want.cols.length && (!l.matchCols || mine.cols.every((h, k) => h.toLowerCase() === want.cols[k].toLowerCase()));
+        lines.push([colsOk ? 'pass' : 'fail', colsOk ? 'Right columns' : `Expected columns: ${want.cols.join(', ')} · got: ${mine.cols.join(', ')}`]);
+        const rowsOk = same(mine.rows, want.rows) || (!l.ordered && same([...mine.rows].map(String).sort(), [...want.rows].map(String).sort()));
+        lines.push([rowsOk ? 'pass' : 'fail', rowsOk ? `Right rows (${want.rows.length})` : `Expected ${want.rows.length} row(s), got ${mine.rows.length}${mine.rows.length === want.rows.length ? ' with different values or order' : ''}`]);
+        ok = colsOk && rowsOk;
+        cb.innerHTML = '<div class="info">your result:</div>' + table(mine);
+      }
+    }
+    if (l.verify) {
+      cb.innerHTML = res.map(r => r.cols ? table(r) : `<div class="out">› ${esc(r.sql.trim().slice(0, 80))} → ${r.affected} row(s) affected</div>`).join('');
+      for (const v of l.verify) {
+        const got = (db.exec(v.sql)[0]?.values) || [];
+        const good = same(got, v.rows); ok = ok && good;
+        lines.push([good ? 'pass' : 'fail', v.n + (good ? '' : ` · expected ${JSON.stringify(v.rows)}, found ${JSON.stringify(got)}`)]);
+      }
+    }
+  } catch (err) { ok = false; lines.push(['fail', sqlErrMsg(err)]); }
+  finally { try { db && db.close(); } catch (e) {} }
+  cb.innerHTML += lines.map(([k, t]) => `<div class="${k}">${k === 'pass' ? '✓' : '✗'} ${esc(t)}</div>`).join('');
+  if (ok) win(l, cb); else { $('#res').innerHTML = '<div class="banner lose">Not quite. Compare with the checks above.</div>'; fail(l); }
+}
+
+/* ---------- attack sandbox ---------- */
+function attack(c, l) {
+  const a = l.attack;
+  c.innerHTML = head(l) + taskBox(l) + `<div class="atk"><label for="atk-in" class="hintk">email typed by the "user"</label><input type="text" id="atk-in" spellcheck="false" autocomplete="off">
+    <div class="glued" id="atk-sql"></div></div>
+    <div class="con"><div class="ch"><span>query result</span><span>SQLite in your browser</span></div><div class="cb" id="atk-out"></div></div><div id="res"></div>`;
+  const inp = $('#atk-in'); inp.value = S.code[l.id] ?? a.start;
+  const go = () => {
+    S.code[l.id] = inp.value; save();
+    $('#atk-sql').innerHTML = esc(a.pre) + `<span class="u">${esc(inp.value)}</span>` + esc(a.post);
+    if (!SQLJS) { $('#atk-out').innerHTML = `<div class="info">${sqlErr ? 'SQL engine failed to load.' : 'Loading SQL engine…'}</div>`; return; }
+    try {
+      const r = withDb(db => runAll(db, a.pre + inp.value + a.post)).find(x => x.cols);
+      $('#atk-out').innerHTML = r ? table(r) : '<div class="info">no result</div>';
+      if (r && r.rows.length === a.target) {
+        if (!S.done[l.id]) { const g = award(l); $('#res').innerHTML = `<div class="banner win"><span>Breached! Every student leaked · +${g} XP</span>${nextBtn(l)}</div>`; }
+        else $('#res').innerHTML = `<div class="banner win"><span>Breached. That's why we never glue input into SQL.</span>${nextBtn(l)}</div>`;
+      } else $('#res').innerHTML = r ? `<div class="hintk">${r.rows.length} of ${a.target} students returned.</div>` : '';
+    } catch (err) {
+      const oom = /Aborted|OOM|out of memory/i.test(err.message);
+      $('#atk-out').innerHTML = `<div class="fail">${esc(sqlErrMsg(err))}</div>` + (oom ? '' : '<div class="info">Your input broke the SQL. Close to an attack; keep the quotes balanced.</div>');
+      $('#res').innerHTML = '';
+    }
+  };
+  let wait = null;
+  inp.addEventListener('input', () => { clearTimeout(wait); wait = setTimeout(go, 150); });  // run once you pause typing
+  go();
+}
+
+/* ---------- boot ---------- */
+refresh();
+const fromHash = (location.hash || '').replace(/^#l/, '');
+openLesson(idx(fromHash) >= 0 ? fromHash : (S.cur || ALL[0].id));
+window.addEventListener('hashchange', () => { const h = location.hash.replace(/^#l/, ''); if (idx(h) >= 0 && h !== S.cur) openLesson(h); });
+</script>
